@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, LogIn } from 'lucide-react';
 import Storage from '../../utils/storage';
-
+//cambio
 function LoginProfesor({ setCurrentPage, setCurrentUser, setUserType }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
