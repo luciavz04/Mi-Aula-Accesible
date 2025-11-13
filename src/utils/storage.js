@@ -1,10 +1,12 @@
+// src/utils/storage.js
+
 const Storage = {
   async get(key) {
     try {
       const value = localStorage.getItem(key);
       return value ? { value } : null;
     } catch (error) {
-      console.error('Error obteniendo dato:', error);
+      console.error('Error al obtener dato de Storage:', error);
       return null;
     }
   },
@@ -12,10 +14,10 @@ const Storage = {
   async set(key, value) {
     try {
       localStorage.setItem(key, value);
-      return { value };
+      return true;
     } catch (error) {
-      console.error('Error guardando dato:', error);
-      return null;
+      console.error('Error al guardar en Storage:', error);
+      return false;
     }
   },
 
@@ -24,7 +26,7 @@ const Storage = {
       localStorage.removeItem(key);
       return true;
     } catch (error) {
-      console.error('Error eliminando dato:', error);
+      console.error('Error al eliminar de Storage:', error);
       return false;
     }
   }

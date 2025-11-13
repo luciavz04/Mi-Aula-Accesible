@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, BookOpen, Users } from 'lucide-react';
-import Storage from '../../utils/storage';
+import React, { useState, useEffect } from "react";
+import { LogOut, Plus, BookOpen, Users, UserPlus } from "lucide-react";
+import { db } from "../../firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
-function ProfesorDashboard({ currentUser, setCurrentPage, handleLogout, setSelectedClase }) {
+function ProfesorDashboard({
+  currentUser,
+  setCurrentPage,
+  handleLogout,
+  setSelectedClase,
+}) {
   const [clases, setClases] = useState([]);
 
   useEffect(() => {
@@ -11,54 +17,64 @@ function ProfesorDashboard({ currentUser, setCurrentPage, handleLogout, setSelec
 
   const cargarClases = async () => {
     try {
-      const result = await Storage.get('clases');
-      const todasClases = result ? JSON.parse(result.value) : [];
-      const misClases = todasClases.filter(c => c.profesorId === currentUser.id);
-      setClases(misClases);
+      // 🔹 Buscar las clases que pertenezcan al profesor logueado
+      const q = query(
+        collection(db, "clases"),
+        where("profesorId", "==", currentUser.id)
+      );
+      const snapshot = await getDocs(q);
+      const clasesProfesor = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setClases(clasesProfesor);
     } catch (err) {
-      console.error('Error cargando clases:', err);
+      console.error("Error cargando clases:", err);
     }
   };
 
   const abrirClase = (clase) => {
     setSelectedClase(clase);
-    setCurrentPage('vista-clase');
+    setCurrentPage("vista-clase");
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-indigo-600 text-white p-6">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold">EduAdapt</h2>
-          <p className="text-indigo-200 text-sm mt-1">Panel Profesor</p>
+      <div className="w-64 bg-indigo-600 text-white p-6 flex flex-col justify-between">
+        <div>
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold">EduAdapt</h2>
+            <p className="text-indigo-200 text-sm mt-1">Panel Profesor</p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => setCurrentPage("crear-clase")}
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-700 hover:bg-indigo-800 rounded-lg transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Crear Nueva Clase</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentPage("registrar-alumno")}
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
+            >
+              <UserPlus className="w-5 h-5" />
+              <span>Registrar Alumno</span>
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <button
-            onClick={() => setCurrentPage('crear-clase')}
-            className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-700 hover:bg-indigo-800 rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Crear Nueva Clase</span>
-          </button>
-
-          <button
-            className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-500 rounded-lg"
-          >
-            <BookOpen className="w-5 h-5" />
-            <span>Mis Clases</span>
-          </button>
-        </div>
-
-        <div className="absolute bottom-6 left-6 right-6">
+        <div>
           <div className="bg-indigo-700 rounded-lg p-4 mb-4">
             <p className="text-sm text-indigo-200">Profesor</p>
             <p className="font-medium">{currentUser?.nombre}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+            className="w-full flex items-center justify-center space-x-3 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
           >
             <LogOut className="w-5 h-5" />
             <span>Cerrar Sesión</span>
@@ -67,7 +83,7 @@ function ProfesorDashboard({ currentUser, setCurrentPage, handleLogout, setSelec
       </div>
 
       {/* Contenido principal */}
-      <div className="ml-64 p-8">
+      <div className="flex-1 p-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             Mis Clases
@@ -87,7 +103,7 @@ function ProfesorDashboard({ currentUser, setCurrentPage, handleLogout, setSelec
               Comienza creando tu primera clase
             </p>
             <button
-              onClick={() => setCurrentPage('crear-clase')}
+              onClick={() => setCurrentPage("crear-clase")}
               className="inline-flex items-center space-x-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Plus className="w-5 h-5" />
@@ -114,7 +130,8 @@ function ProfesorDashboard({ currentUser, setCurrentPage, handleLogout, setSelec
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <p className="text-sm text-gray-500">
-                    Creada el {new Date(clase.fechaCreacion).toLocaleDateString()}
+                    Creada el{" "}
+                    {new Date(clase.fechaCreacion).toLocaleDateString()}
                   </p>
                 </div>
               </div>

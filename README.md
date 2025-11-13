@@ -1,70 +1,135 @@
-# Getting Started with Create React App
+# 🧠 EduAdapt – Plataforma Educativa Accesible
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**EduAdapt** es una página web creada con **React (Create React App)** que tiene como objetivo facilitar la labor docente, permitiendo a los profesores registrar alumnos, crear clases y subir **materiales adaptados** a diversas necesidades educativas:
 
-## Available Scripts
+* Dislexia
+* TDAH (Trastorno por Déficit de Atención con Hiperactividad)
+* Discapacidad visual
+* Discapacidad auditiva
+* Mejora de la comprensión lectora
+* Otras necesidades específicas.
 
-In the project directory, you can run:
+El proyecto utiliza **Firebase Firestore** como **base de datos en la nube** para almacenar de forma segura toda la información de alumnos, clases y materiales.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🚀 Guía Rápida para la Ejecución del Proyecto
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Sigue estos pasos para poner en marcha el proyecto **EduAdapt** en tu entorno local. No se requiere experiencia previa con React o Firebase.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 🧩 1. Instalación de Node.js
 
-### `npm run build`
+Para ejecutar el proyecto de React, necesitas tener instalado **Node.js** (que incluye el gestor de paquetes `npm`).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1.  Descarga el instalador desde el sitio oficial: 👉 [https://nodejs.org](https://nodejs.org)
+2.  Instala con las opciones por defecto.
+3.  **Verifica la instalación** abriendo tu terminal (Símbolo del Sistema, PowerShell o Terminal) y ejecutando:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    ```bash
+    node -v
+    npm -v
+    ```
+    Si ves los números de versión (ej. `v20.10.0`), todo es correcto. ✅
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+### 📦 2. Instalación de Dependencias del Proyecto
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Una vez que tengas Node.js, debes descargar todas las librerías necesarias (React, Firebase, etc.).
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1.  Abre Visual Studio Code (o tu IDE preferido).
+2.  Abre la terminal integrada (o la externa) y **asegúrate de estar en la carpeta raíz del proyecto** (donde se encuentra el archivo `package.json`).
+3.  Ejecuta el siguiente comando:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+    ```bash
+    npm install
+    ```
+    > **Nota:** Este paso solo es necesario la primera vez que clonas el proyecto o si las dependencias cambian.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+### 🔥 3. Conexión con Firebase (Configuración Inicial)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+El archivo `src/firebase.js` es crucial, ya que establece la conexión con la base de datos Firestore.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+1.  Accede a la Consola de Firebase: [https://console.firebase.google.com](https://console.firebase.google.com)
+2.  Abre tu proyecto (o crea uno) llamado **EduAdapt**.
+3.  Ve a **Configuración del proyecto** (icono de rueda dentada) → **Tus apps** → **Web** (`</>`).
+4.  Copia el bloque de configuración que Firebase te proporciona (se verá similar a esto):
 
-### Code Splitting
+    ```javascript
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID"
+    };
+    ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+5.  Abre o crea el archivo **`src/firebase.js`** en tu proyecto y pégalo utilizando el siguiente formato:
 
-### Analyzing the Bundle Size
+    ```javascript
+    // src/firebase.js
+    import { initializeApp } from "firebase/app";
+    import { getFirestore } from "firebase/firestore";
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+    const firebaseConfig = {
+      // Pega aquí tu configuración copiada
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID"
+    };
 
-### Making a Progressive Web App
+    // Inicializa Firebase
+    const app = initializeApp(firebaseConfig);
+    // Exporta la conexión a Firestore (la base de datos)
+    export const db = getFirestore(app);
+    ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+6.  Guarda los cambios y la conexión estará lista. ✅
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### ▶️ 4. Ejecución de la Aplicación
 
-### Deployment
+Para iniciar el servidor de desarrollo y ver la plataforma en tu navegador:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1.  En la terminal del proyecto, ejecuta:
 
-### `npm run build` fails to minify
+    ```bash
+    npm start
+    ```
+2.  Esto abrirá automáticamente la aplicación en tu navegador:
+    👉 **http://localhost:3000**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+    > **Consejo:** El servidor se reiniciará y la página se actualizará automáticamente cada vez que guardes un archivo. Para detener el servidor, pulsa `Ctrl + C` en la terminal.
+
+---
+
+## 👩‍🏫 Cómo Usar la Plataforma
+
+El flujo de trabajo principal está diseñado para el docente:
+
+### Paso 1️⃣ — Acceso como Profesor
+
+* Desde la pantalla principal de **EduAdapt**, haz clic en el botón **“Soy Profesor”**.
+* Si no tienes una cuenta, selecciona **“Crear Cuenta”** y completa el registro para acceder al panel.
+
+### Paso 2️⃣ — Panel del Profesor
+
+Una vez dentro, el profesor tiene acceso a las siguientes funcionalidades clave:
+
+| Función | Descripción | Almacenamiento |
+| :--- | :--- | :--- |
+| 🧾 **Registrar alumnos** | Permite guardar datos de nuevos alumnos (nombre, apellidos, usuario, DNI y contraseña). | Firebase |
+| 🏫 **Crear clases** | Asigna un nombre a la clase y selecciona alumnos ya registrados para incluirlos en ella. | Firebase |
+| 📚 **Ver clases creadas** | Muestra un listado de todas las clases creadas por el profesor. | N/A |
+
+Al hacer clic en una clase listada, el profesor puede **ver los alumnos asignados** o **añadir materiales** adaptados.
