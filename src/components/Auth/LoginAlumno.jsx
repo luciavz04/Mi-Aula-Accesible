@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, LogIn } from 'lucide-react';
-import Storage from '../../utils/storage';
+import { db } from '../../firebase';
+import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 
 function LoginAlumno({ setCurrentPage, setCurrentUser, setUserType }) {
   const [usuario, setUsuario] = useState('');
@@ -12,22 +13,39 @@ function LoginAlumno({ setCurrentPage, setCurrentUser, setUserType }) {
     setError('');
 
     try {
-      const result = await Storage.get('alumnos');
-      const alumnos = result ? JSON.parse(result.value) : [];
+      const usuarioNormalizado = usuario.trim();
 
-      const alumno = alumnos.find(
-        a => a.usuario === usuario && a.password === password
+      if (!usuarioNormalizado || !password) {
+        setError('Introduce tu usuario y contraseña');
+        return;
+      }
+
+      const q = query(
+        collection(db, 'alumnos'),
+        where('usuario', '==', usuarioNormalizado),
+        limit(1)
       );
 
-      if (alumno) {
-        setCurrentUser(alumno);
-        setUserType('alumno');
-        localStorage.setItem('currentUser', JSON.stringify(alumno));
-        localStorage.setItem('userType', 'alumno');
-        setCurrentPage('alumno-dashboard');
-      } else {
-        setError('Usuario o contraseña incorrectos');
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        setError('No se encontró un alumno con ese usuario');
+        return;
       }
+
+      const alumnoDoc = snapshot.docs[0];
+      const alumno = { id: alumnoDoc.id, ...alumnoDoc.data() };
+
+      if (alumno.password !== password) {
+        setError('Usuario o contraseña incorrectos');
+        return;
+      }
+
+      setCurrentUser(alumno);
+      setUserType('alumno');
+      localStorage.setItem('currentUser', JSON.stringify(alumno));
+      localStorage.setItem('userType', 'alumno');
+      setCurrentPage('alumno-dashboard');
     } catch (err) {
       setError('Error al iniciar sesión');
       console.error(err);

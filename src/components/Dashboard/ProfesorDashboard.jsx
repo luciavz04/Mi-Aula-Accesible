@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { LogOut, Plus, BookOpen, Users, UserPlus } from "lucide-react";
 import { db } from "../../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -11,11 +11,7 @@ function ProfesorDashboard({
 }) {
   const [clases, setClases] = useState([]);
 
-  useEffect(() => {
-    cargarClases();
-  }, [currentUser]);
-
-  const cargarClases = async () => {
+  const cargarClases = useCallback(async () => {
     try {
       // 🔹 Buscar las clases que pertenezcan al profesor logueado
       const q = query(
@@ -31,7 +27,11 @@ function ProfesorDashboard({
     } catch (err) {
       console.error("Error cargando clases:", err);
     }
-  };
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    cargarClases();
+  }, [cargarClases]);
 
   const abrirClase = (clase) => {
     setSelectedClase(clase);

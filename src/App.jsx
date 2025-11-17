@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import HomePage from "./components/HomePage";
 import LoginProfesor from "./components/Auth/LoginProfesor";
+import LoginAlumno from "./components/Auth/LoginAlumno";
 import RegistroProfesor from "./components/Auth/RegistroProfesor";
 import ProfesorDashboard from "./components/Dashboard/ProfesorDashboard";
+import AlumnoDashboard from "./components/Dashboard/AlumnoDashboard";
 import RegistrarAlumno from "./components/Dashboard/RegistrarAlumno";
 import CrearClase from "./components/Dashboard/CrearClase";
+import VistaClase from "./components/Clase/VistaClase";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
@@ -15,6 +18,7 @@ function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setUserType(null);
+    setSelectedClase(null);
     setCurrentPage("home");
   };
 
@@ -24,6 +28,14 @@ function App() {
 
       {currentPage === "login-profesor" && (
         <LoginProfesor
+          setCurrentPage={setCurrentPage}
+          setCurrentUser={setCurrentUser}
+          setUserType={setUserType}
+        />
+      )}
+
+      {currentPage === "login-alumno" && (
+        <LoginAlumno
           setCurrentPage={setCurrentPage}
           setCurrentUser={setCurrentUser}
           setUserType={setUserType}
@@ -49,6 +61,24 @@ function App() {
 
       {currentPage === "crear-clase" && (
         <CrearClase currentUser={currentUser} setCurrentPage={setCurrentPage} />
+      )}
+
+      {currentPage === "alumno-dashboard" && currentUser && (
+        <AlumnoDashboard
+          currentUser={currentUser}
+          setCurrentPage={setCurrentPage}
+          handleLogout={handleLogout}
+          setSelectedClase={setSelectedClase}
+        />
+      )}
+
+      {currentPage === "vista-clase" && selectedClase && (
+        <VistaClase
+          clase={selectedClase}
+          currentUser={currentUser}
+          userType={userType}
+          setCurrentPage={setCurrentPage}
+        />
       )}
     </div>
   );

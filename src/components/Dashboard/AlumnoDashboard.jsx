@@ -1,29 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, BookOpen, GraduationCap } from 'lucide-react';
-import Storage from '../../utils/storage';
+import React, { useState, useEffect, useCallback } from 'react';
+import { LogOut, BookOpen, GraduationCap, Loader2, Sparkles } from 'lucide-react';
+import { db } from '../../firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 function AlumnoDashboard({ currentUser, setCurrentPage, handleLogout, setSelectedClase }) {
   const [clases, setClases] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    cargarClases();
-  }, [currentUser]);
+  const cargarClases = useCallback(async () => {
+    if (!currentUser?.id && !currentUser?.usuario) {
+      setClases([]);
+      setCargando(false);
+      return;
+    }
 
-  const cargarClases = async () => {
+    setCargando(true);
+    setError('');
+
     try {
-      const result = await Storage.get('clases');
-      const todasClases = result ? JSON.parse(result.value) : [];
-      
-      // Filtrar clases donde el alumno está inscrito
-      const misClases = todasClases.filter(clase => 
-        clase.alumnos?.some(alumno => alumno.id === currentUser.id)
-      );
-      
+      const clasesRef = collection(db, 'clases');
+      let snapshot = null;
+      let misClases = [];
+
+      if (currentUser?.id) {
+        const q = query(clasesRef, where('alumnos', 'array-contains', currentUser.id));
+        snapshot = await getDocs(q);
+        misClases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      }
+
+      // Algunos documentos antiguos guardaron el usuario u objetos completos.
+      if (misClases.length === 0) {
+        const respaldoSnapshot = await getDocs(clasesRef);
+        misClases = respaldoSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter((clase) => {
+            const alumnos = Array.isArray(clase.alumnos) ? clase.alumnos : [];
+            return alumnos.some((alumno) => {
+              if (typeof alumno === 'string') {
+                return alumno === currentUser?.id || alumno === currentUser?.usuario;
+              }
+              if (alumno && typeof alumno === 'object') {
+                return alumno.id === currentUser?.id || alumno.usuario === currentUser?.usuario;
+              }
+              return false;
+            });
+          });
+      }
+
       setClases(misClases);
     } catch (err) {
       console.error('Error cargando clases:', err);
+      setError('No pudimos recuperar tus clases. Reintenta en unos segundos.');
     }
-  };
+    setCargando(false);
+  }, [currentUser?.id, currentUser?.usuario]);
+
+  useEffect(() => {
+    cargarClases();
+  }, [cargarClases]);
 
   const abrirClase = (clase) => {
     setSelectedClase(clase);
@@ -56,6 +91,8 @@ function AlumnoDashboard({ currentUser, setCurrentPage, handleLogout, setSelecte
       </div>
     );
   };
+
+  const necesidadesActivas = currentUser?.necesidades?.filter((n) => n !== 'Ninguna') || [];
 
   return (
     <div className="min-h-screen">
@@ -90,18 +127,44 @@ function AlumnoDashboard({ currentUser, setCurrentPage, handleLogout, setSelecte
       </div>
 
       {/* Contenido principal */}
-      <div className="ml-64 p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Mis Clases
-          </h1>
-          <p className="text-gray-600">
-            Accede a tus materiales de estudio
-          </p>
-        </div>
+      <div className="ml-64 p-8 space-y-8">
+        <section className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl text-white p-8 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div>
+              <p className="uppercase text-xs tracking-widest text-white/80">Bienvenido/a</p>
+              <h1 className="text-3xl font-bold mt-2">{currentUser?.nombre}</h1>
+              <p className="text-white/80 mt-2 max-w-2xl">
+                Esta es tu aula accesible. Los materiales que suba tu profesor ya vienen adaptados automáticamente para tus necesidades, así que solo tienes que entrar y estudiar sin barreras.
+              </p>
+            </div>
+            {necesidadesActivas.length > 0 && (
+              <div className="bg-white/10 rounded-2xl px-6 py-4 backdrop-blur text-sm">
+                <p className="font-semibold mb-1 flex items-center gap-2"><Sparkles className="w-4 h-4" /> Apoyos activos</p>
+                <div className="flex flex-wrap gap-2">
+                  {necesidadesActivas.map((necesidad) => (
+                    <span key={necesidad} className="px-3 py-1 rounded-full bg-white/20">
+                      {necesidad}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
 
-        {clases.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+        {error && (
+          <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-2xl">
+            {error}
+          </div>
+        )}
+
+        {cargando ? (
+          <div className="bg-white rounded-3xl shadow-md p-12 text-center">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Buscando tus clases...</p>
+          </div>
+        ) : clases.length === 0 ? (
+          <div className="bg-white rounded-3xl shadow-md p-12 text-center">
             <GraduationCap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
               No estás inscrito en ninguna clase
@@ -111,26 +174,29 @@ function AlumnoDashboard({ currentUser, setCurrentPage, handleLogout, setSelecte
             </p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
             {clases.map((clase) => (
               <div
                 key={clase.id}
                 onClick={() => abrirClase(clase)}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow cursor-pointer p-6"
+                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow cursor-pointer p-6 border border-transparent hover:border-blue-100"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-800">
-                    {clase.nombre}
-                  </h3>
-                  <BookOpen className="w-8 h-8 text-blue-600" />
+                  <div>
+                    <p className="text-xs uppercase text-gray-500">Clase</p>
+                    <h3 className="text-2xl font-bold text-gray-800">{clase.nombre}</h3>
+                  </div>
+                  <BookOpen className="w-10 h-10 text-blue-600" />
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Profesor:</span> {clase.profesorNombre}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    {clase.materiales?.length || 0} materiales disponibles
-                  </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Profesor:</span> {clase.profesorNombre}
+                </p>
+                <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+                  <span>{clase.materiales?.length || 0} materiales adaptados</span>
+                  <span>
+                    Actualizada el{' '}
+                    {clase.fechaCreacion ? new Date(clase.fechaCreacion).toLocaleDateString() : '—'}
+                  </span>
                 </div>
               </div>
             ))}
