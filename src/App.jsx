@@ -8,6 +8,8 @@ import AlumnoDashboard from "./components/Dashboard/AlumnoDashboard";
 import RegistrarAlumno from "./components/Dashboard/RegistrarAlumno";
 import CrearClase from "./components/Dashboard/CrearClase";
 import VistaClase from "./components/Clase/VistaClase";
+import ListaAlumnos from "./components/Dashboard/ListaAlumnos";
+
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
@@ -71,6 +73,11 @@ function App() {
           setSelectedClase={setSelectedClase}
         />
       )}
+
+      {currentPage === "lista-alumnos" && (
+  <ListaAlumnos setCurrentPage={setCurrentPage} />
+)}
+
 
       {currentPage === "vista-clase" && selectedClase && (
         <VistaClase

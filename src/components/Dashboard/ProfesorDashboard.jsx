@@ -13,7 +13,6 @@ function ProfesorDashboard({
 
   const cargarClases = useCallback(async () => {
     try {
-      // 🔹 Buscar las clases que pertenezcan al profesor logueado
       const q = query(
         collection(db, "clases"),
         where("profesorId", "==", currentUser.id)
@@ -64,6 +63,15 @@ function ProfesorDashboard({
               <UserPlus className="w-5 h-5" />
               <span>Registrar Alumno</span>
             </button>
+
+            {/* 🔹 Nuevo botón para ver lista de alumnos */}
+            <button
+              onClick={() => setCurrentPage("lista-alumnos")}
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-400 hover:bg-indigo-500 rounded-lg transition-colors"
+            >
+              <Users className="w-5 h-5" />
+              <span>Ver Lista de Alumnos</span>
+            </button>
           </div>
         </div>
 
@@ -85,12 +93,8 @@ function ProfesorDashboard({
       {/* Contenido principal */}
       <div className="flex-1 p-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Mis Clases
-          </h1>
-          <p className="text-gray-600">
-            Gestiona tus clases y estudiantes
-          </p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Mis Clases</h1>
+          <p className="text-gray-600">Gestiona tus clases y estudiantes</p>
         </div>
 
         {clases.length === 0 ? (
