@@ -1,22 +1,21 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { LogOut, Plus, BookOpen, Users, UserPlus } from "lucide-react";
+import { LogOut, Plus, BookOpen, Users, UserPlus, Pencil, Trash2 } from "lucide-react";
 import { db } from "../../firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 
 function ProfesorDashboard({
   currentUser,
   setCurrentPage,
   handleLogout,
   setSelectedClase,
+  setClaseParaEditar,
 }) {
   const [clases, setClases] = useState([]);
 
+  // 🔹 Cargar clases del profesor
   const cargarClases = useCallback(async () => {
     try {
-      const q = query(
-        collection(db, "clases"),
-        where("profesorId", "==", currentUser.id)
-      );
+      const q = query(collection(db, "clases"), where("profesorId", "==", currentUser.id));
       const snapshot = await getDocs(q);
       const clasesProfesor = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -32,9 +31,28 @@ function ProfesorDashboard({
     cargarClases();
   }, [cargarClases]);
 
+  // 🔸 Abrir clase
   const abrirClase = (clase) => {
     setSelectedClase(clase);
     setCurrentPage("vista-clase");
+  };
+
+  // 🔸 Editar clase
+  const editarClase = (clase) => {
+    setClaseParaEditar(clase);
+    setCurrentPage("editar-clase");
+  };
+
+  // 🔸 Eliminar clase
+  const eliminarClase = async (claseId) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta clase? Esta acción no se puede deshacer.")) return;
+
+    try {
+      await deleteDoc(doc(db, "clases", claseId));
+      setClases((prev) => prev.filter((c) => c.id !== claseId));
+    } catch (err) {
+      console.error("Error al eliminar la clase:", err);
+    }
   };
 
   return (
@@ -64,10 +82,9 @@ function ProfesorDashboard({
               <span>Registrar Alumno</span>
             </button>
 
-            {/* 🔹 Nuevo botón para ver lista de alumnos */}
             <button
               onClick={() => setCurrentPage("lista-alumnos")}
-              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-400 hover:bg-indigo-500 rounded-lg transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
             >
               <Users className="w-5 h-5" />
               <span>Ver Lista de Alumnos</span>
@@ -119,24 +136,45 @@ function ProfesorDashboard({
             {clases.map((clase) => (
               <div
                 key={clase.id}
-                onClick={() => abrirClase(clase)}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow cursor-pointer p-6"
+                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow border border-gray-100 p-6 flex flex-col justify-between"
               >
+                {/* Encabezado de clase */}
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-800">
+                  <h3
+                    onClick={() => abrirClase(clase)}
+                    className="text-xl font-bold text-gray-800 cursor-pointer hover:text-indigo-600"
+                  >
                     {clase.nombre}
                   </h3>
-                  <BookOpen className="w-8 h-8 text-indigo-600" />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => editarClase(clase)}
+                      className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition"
+                      title="Editar clase"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => eliminarClase(clase.id)}
+                      className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition"
+                      title="Eliminar clase"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center text-gray-600">
-                  <Users className="w-5 h-5 mr-2" />
+
+                {/* Info de clase */}
+                <div className="flex items-center text-gray-600 mb-3">
+                  <Users className="w-5 h-5 mr-2 text-indigo-500" />
                   <span>{clase.alumnos?.length || 0} alumnos</span>
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-500">
+                <div className="flex items-center text-sm text-gray-500">
+                  <BookOpen className="w-4 h-4 mr-1 text-indigo-400" />
+                  <span>
                     Creada el{" "}
                     {new Date(clase.fechaCreacion).toLocaleDateString()}
-                  </p>
+                  </span>
                 </div>
               </div>
             ))}

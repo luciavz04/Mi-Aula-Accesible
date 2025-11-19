@@ -9,25 +9,29 @@ import RegistrarAlumno from "./components/Dashboard/RegistrarAlumno";
 import CrearClase from "./components/Dashboard/CrearClase";
 import VistaClase from "./components/Clase/VistaClase";
 import ListaAlumnos from "./components/Dashboard/ListaAlumnos";
-
+import EditarClase from "./components/Dashboard/EditarClase";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [currentUser, setCurrentUser] = useState(null);
   const [userType, setUserType] = useState(null);
   const [selectedClase, setSelectedClase] = useState(null);
+  const [claseParaEditar, setClaseParaEditar] = useState(null);
 
   const handleLogout = () => {
     setCurrentUser(null);
     setUserType(null);
     setSelectedClase(null);
+    setClaseParaEditar(null);
     setCurrentPage("home");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Página de inicio */}
       {currentPage === "home" && <HomePage setCurrentPage={setCurrentPage} />}
 
+      {/* Login profesor */}
       {currentPage === "login-profesor" && (
         <LoginProfesor
           setCurrentPage={setCurrentPage}
@@ -36,6 +40,7 @@ function App() {
         />
       )}
 
+      {/* Login alumno */}
       {currentPage === "login-alumno" && (
         <LoginAlumno
           setCurrentPage={setCurrentPage}
@@ -44,27 +49,33 @@ function App() {
         />
       )}
 
+      {/* Registro profesor */}
       {currentPage === "registro-profesor" && (
         <RegistroProfesor setCurrentPage={setCurrentPage} />
       )}
 
+      {/* Dashboard profesor */}
       {currentPage === "profesor-dashboard" && currentUser && (
         <ProfesorDashboard
           currentUser={currentUser}
           setCurrentPage={setCurrentPage}
           handleLogout={handleLogout}
           setSelectedClase={setSelectedClase}
+          setClaseParaEditar={setClaseParaEditar} // ✅ ESTA LÍNEA ES CLAVE
         />
       )}
 
+      {/* Registrar alumno */}
       {currentPage === "registrar-alumno" && (
         <RegistrarAlumno setCurrentPage={setCurrentPage} />
       )}
 
+      {/* Crear nueva clase */}
       {currentPage === "crear-clase" && (
         <CrearClase currentUser={currentUser} setCurrentPage={setCurrentPage} />
       )}
 
+      {/* Dashboard alumno */}
       {currentPage === "alumno-dashboard" && currentUser && (
         <AlumnoDashboard
           currentUser={currentUser}
@@ -74,11 +85,17 @@ function App() {
         />
       )}
 
+      {/* Lista de alumnos */}
       {currentPage === "lista-alumnos" && (
-  <ListaAlumnos setCurrentPage={setCurrentPage} />
-)}
+        <ListaAlumnos setCurrentPage={setCurrentPage} />
+      )}
 
+      {/* Editar clase */}
+      {currentPage === "editar-clase" && claseParaEditar && (
+        <EditarClase clase={claseParaEditar} setCurrentPage={setCurrentPage} />
+      )}
 
+      {/* Vista clase (profesor o alumno) */}
       {currentPage === "vista-clase" && selectedClase && (
         <VistaClase
           clase={selectedClase}
