@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  LogOut,
-  BookOpen,
-  GraduationCap,
-  Loader2,
-  Sparkles,
-  Layers,
-} from "lucide-react";
 import { db } from "../../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { BookOpen, Layers, LogOut, Sparkles, Contrast, Type, Loader2, GraduationCap } from 'lucide-react';
 
 function AlumnoDashboard({
   currentUser,
@@ -19,6 +12,9 @@ function AlumnoDashboard({
   const [clases, setClases] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [altoContraste, setAltoContraste] = useState(false);
+  const [textoGrande, setTextoGrande] = useState(false);
+  const [modoConcentracion, setModoConcentracion] = useState(false);
 
   const cargarClases = useCallback(async () => {
     if (!currentUser?.id && !currentUser?.usuario) {
@@ -30,7 +26,7 @@ function AlumnoDashboard({
     setCargando(true);
     setError("");
 
-    try {
+    try{
       const clasesRef = collection(db, "clases");
       let snapshot = null;
       let misClases = [];
@@ -49,10 +45,15 @@ function AlumnoDashboard({
             const alumnos = Array.isArray(clase.alumnos) ? clase.alumnos : [];
             return alumnos.some((alumno) => {
               if (typeof alumno === "string") {
-                return alumno === currentUser?.id || alumno === currentUser?.usuario;
+                return (
+                  alumno === currentUser?.id || alumno === currentUser?.usuario
+                );
               }
               if (alumno && typeof alumno === "object") {
-                return alumno.id === currentUser?.id || alumno.usuario === currentUser?.usuario;
+                return (
+                  alumno.id === currentUser?.id ||
+                  alumno.usuario === currentUser?.usuario
+                );
               }
               return false;
             });
@@ -70,6 +71,19 @@ function AlumnoDashboard({
   useEffect(() => {
     cargarClases();
   }, [cargarClases]);
+
+  useEffect(() => {
+    if (currentUser?.necesidades?.includes("Discapacidad Visual")) {
+      setAltoContraste(true);
+      setTextoGrande(true);
+    }
+    if (currentUser?.necesidades?.includes("Dislexia")) {
+      setTextoGrande(true);
+    }
+    if (currentUser?.necesidades?.includes("TDAH")) {
+      setModoConcentracion(true);
+    }
+  }, [currentUser?.necesidades]);
 
   const abrirClase = (clase) => {
     setSelectedClase(clase);
@@ -107,11 +121,20 @@ function AlumnoDashboard({
 
   const necesidadesActivas =
     currentUser?.necesidades?.filter((n) => n !== "Ninguna") || [];
+  // Do not set a global text color on the root so children can control their own contrast.
+  const fondo = altoContraste ? "bg-slate-900" : "bg-gray-100";
+  const tarjeta = altoContraste
+    ? "bg-slate-800 text-white border border-slate-700"
+    : "bg-white text-gray-900 border border-gray-100";
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className={`min-h-screen flex ${fondo}`}>
       {/* Sidebar */}
-      <div className="w-64 bg-blue-600 text-white p-6 flex flex-col justify-between">
+      <div
+        className={`w-64 p-6 flex flex-col justify-between ${
+          altoContraste ? "bg-slate-800 text-white" : "bg-blue-600 text-white"
+        }`}
+      >
         <div>
           <div className="mb-10">
             <h2 className="text-2xl font-bold">EduAdapt</h2>
@@ -154,14 +177,22 @@ function AlumnoDashboard({
       {/* Contenido principal */}
       <div className="flex-1 p-10 space-y-8">
         {/* Header principal */}
-        <section className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl text-white p-8 shadow-xl">
+        <section
+          className={`rounded-3xl p-8 shadow-xl ${
+            altoContraste
+              ? "bg-slate-800 border border-slate-700 text-white"
+              : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+          }`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div>
               <p className="uppercase text-xs tracking-widest text-white/80">
                 Bienvenido/a
               </p>
-              <h1 className="text-3xl font-bold mt-2">{currentUser?.nombre}</h1>
-              <p className="text-white/80 mt-2 max-w-2xl">
+              <h1 className={`mt-2 font-bold ${textoGrande ? "text-4xl" : "text-3xl"}`}>
+                {currentUser?.nombre}
+              </h1>
+              <p className={`${textoGrande ? "text-lg" : "text-base"} text-white/80 mt-2 max-w-2xl`}>
                 Esta es tu aula accesible. Aquí verás las clases a las que te
                 hayas unido, con materiales ya adaptados a tus necesidades.
               </p>
@@ -172,16 +203,75 @@ function AlumnoDashboard({
                 <p className="font-semibold mb-1 flex items-center gap-2">
                   <Sparkles className="w-4 h-4" /> Apoyos activos
                 </p>
-                <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
                   {necesidadesActivas.map((necesidad) => (
                     <span
                       key={necesidad}
-                      className="px-3 py-1 rounded-full bg-white/20"
+                      className="px-3 py-1 rounded-full bg-white/20 text-gray-900"
                     >
                       {necesidad}
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="grid md:grid-cols-3 gap-4">
+          <div className={`${tarjeta} rounded-2xl shadow p-5 col-span-2 flex flex-col gap-3`}>
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Contrast className="w-4 h-4 text-indigo-500" /> Ajusta el contraste y tamaño de texto
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setAltoContraste((prev) => !prev)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
+                  altoContraste
+                    ? "bg-black text-white border-white/30"
+                    : "bg-indigo-50 text-indigo-700 border-indigo-100"
+                }`}
+              >
+                {altoContraste ? "Desactivar alto contraste" : "Activar alto contraste"}
+              </button>
+              <button
+                onClick={() => setTextoGrande((prev) => !prev)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
+                  textoGrande
+                    ? "bg-emerald-600 text-white border-emerald-500"
+                    : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                }`}
+              >
+                {textoGrande ? "Texto normal" : "Aumentar texto"}
+              </button>
+              <button
+                onClick={() => setModoConcentracion((prev) => !prev)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
+                  modoConcentracion
+                    ? "bg-amber-500 text-white border-amber-400"
+                    : "bg-amber-50 text-amber-700 border-amber-100"
+                }`}
+              >
+                {modoConcentracion ? "Modo concentración activo" : "Activar modo concentración"}
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-slate-200">
+              Estas preferencias personalizan la interfaz, resaltan botones y amplían texto para dislexia, TDAH y baja visión.
+            </p>
+          </div>
+          <div className={`${tarjeta} rounded-2xl shadow p-5 space-y-2`}>
+            <div className="flex items-center gap-2 font-semibold text-sm">
+              <Type className="w-4 h-4 text-blue-500" /> Necesidades activas
+            </div>
+            {necesidadesActivas.length === 0 ? (
+              <p className="text-sm text-gray-600 dark:text-slate-200">No declaraste necesidades específicas.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {necesidadesActivas.map((n) => (
+                  <span key={n} className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
+                    {n}
+                  </span>
+                ))}
               </div>
             )}
           </div>
@@ -194,12 +284,12 @@ function AlumnoDashboard({
         )}
 
         {cargando ? (
-          <div className="bg-white rounded-3xl shadow-md p-12 text-center">
+          <div className="bg-white text-gray-900 rounded-3xl shadow-md p-12 text-center">
             <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Buscando tus clases...</p>
           </div>
         ) : clases.length === 0 ? (
-          <div className="bg-white rounded-3xl shadow-md p-12 text-center">
+          <div className="bg-white text-gray-900 rounded-3xl shadow-md p-12 text-center">
             <GraduationCap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
               No estás inscrito en ninguna clase
@@ -214,18 +304,20 @@ function AlumnoDashboard({
               <div
                 key={clase.id}
                 onClick={() => abrirClase(clase)}
-                className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all cursor-pointer p-6 border border-transparent hover:border-blue-100"
+                className={`${tarjeta} rounded-2xl shadow-md hover:shadow-2xl transition-all cursor-pointer p-6 border hover:border-blue-200 ${
+                  modoConcentracion ? 'outline outline-2 outline-amber-300' : ''
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-xs uppercase text-gray-500">Clase</p>
-                    <h3 className="text-2xl font-bold text-gray-800">
+                    <h3 className={`${textoGrande ? 'text-2xl' : 'text-xl'} font-bold`}>
                       {clase.nombre}
                     </h3>
                   </div>
                   <BookOpen className="w-10 h-10 text-blue-600" />
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className={`${textoGrande ? 'text-base' : 'text-sm'} text-gray-600`}>
                   <span className="font-medium">Profesor:</span>{" "}
                   {clase.profesorNombre}
                 </p>
