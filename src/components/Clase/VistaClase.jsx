@@ -3,9 +3,8 @@ import {
   ArrowLeft,
   Upload,
   Paperclip,
-  FileText,
-  Megaphone,
   Send,
+  Megaphone,
 } from "lucide-react";
 
 import { supabase, adaptarTexto } from "../../supabase";
@@ -21,7 +20,6 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
   const [nuevoAnuncio, setNuevoAnuncio] = useState("");
   const [subiendo, setSubiendo] = useState(false);
   const [mensajeError, setMensajeError] = useState("");
-  const [debugMsg, setDebugMsg] = useState("");
 
   const esAlumno = userType === "alumno";
 
@@ -29,48 +27,48 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
       CARGA DE MATERIALES
   ============================================================ */
   const cargarMateriales = useCallback(async () => {
-    setDebugMsg((m) => m + "\n[Cargando materiales...]");
+    try {
+      const { data, error } = await supabase
+        .from("materiales")
+        .select("*")
+        .eq("clase_id", clase.id)
+        .order("fecha_subida", { ascending: false });
 
-    const { data, error } = await supabase
-      .from("materiales")
-      .select("*")
-      .eq("clase_id", clase.id)
-      .order("fecha_subida", { ascending: false });
-
-    setDebugMsg((m) =>
-      m +
-      `\nMateriales recibidos (${data?.length || 0})\nError: ${
-        error ? JSON.stringify(error) : "NO"
-      }\n`
-    );
-
-    if (!error) setMateriales(data || []);
+      if (error) throw error;
+      
+      setMateriales(data || []);
+      console.log("✅ Materiales cargados:", data?.length || 0);
+    } catch (err) {
+      console.error("❌ Error cargando materiales:", err);
+      setMateriales([]);
+    }
   }, [clase.id]);
 
   /* ============================================================
-      CARGA DE ANUNCIOS (CON DEPURACIÓN)
+      CARGA DE ANUNCIOS - CORREGIDO
   ============================================================ */
   const cargarAnuncios = useCallback(async () => {
-    setDebugMsg((m) => m + "\n[Cargando anuncios...]");
+    try {
+      console.log("🔍 Buscando anuncios para clase_id:", clase.id);
+      
+      const { data, error } = await supabase
+        .from("anuncios")
+        .select("*")
+        .eq("clase_id", clase.id)
+        .order("fecha", { ascending: false });
 
-    const { data, error } = await supabase
-      .from("anuncios")
-      .select("*")
-      .eq("clase_id", clase.id)
-      .order("fecha", { ascending: false });
+      if (error) {
+        console.error("❌ Error en query de anuncios:", error);
+        throw error;
+      }
 
-    setDebugMsg(
-      (m) =>
-        m +
-        `\nANUNCIOS DEVUELTOS POR SUPABASE: ${JSON.stringify(
-          data,
-          null,
-          2
-        )}\nERROR: ${error ? JSON.stringify(error) : "NO"}\n`
-    );
-
-    if (!error) setAnuncios(data || []);
-    else setAnuncios([]);
+      console.log("✅ Anuncios recibidos de Supabase:", data);
+      setAnuncios(data || []);
+      
+    } catch (err) {
+      console.error("❌ Error cargando anuncios:", err);
+      setAnuncios([]);
+    }
   }, [clase.id]);
 
   /* ============================================================
@@ -89,7 +87,8 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.extractRawText({ arrayBuffer });
       return result.value || "";
-    } catch {
+    } catch (err) {
+      console.error("Error procesando Word:", err);
       return "";
     }
   };
@@ -98,74 +97,113 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
       SUBIR MATERIAL
   ============================================================ */
   const subirMaterial = async () => {
-    if (!archivoAdjunto)
-      return setMensajeError("Debes seleccionar un archivo.");
+    if (!archivoAdjunto) {
+      setMensajeError("Debes seleccionar un archivo.");
+      return;
+    }
 
     setSubiendo(true);
     setMensajeError("");
 
-    const file = archivoAdjunto.archivo;
-    const nombreArchivo = `${Date.now()}-${file.name}`;
+    try {
+      const file = archivoAdjunto.archivo;
+      const nombreArchivo = `${Date.now()}-${file.name}`;
 
-    let textoExtraido = "";
-    let adaptaciones = null;
+      let textoExtraido = "";
+      let adaptaciones = null;
 
-    if (file.name.endsWith(".docx")) {
-      textoExtraido = await procesarWord(file);
-    }
+      if (file.name.endsWith(".docx")) {
+        textoExtraido = await procesarWord(file);
+      }
 
-    if (textoExtraido) {
-      adaptaciones = adaptarTexto.generarTodasAdaptaciones(textoExtraido);
-    }
+      if (textoExtraido) {
+        adaptaciones = adaptarTexto.generarTodasAdaptaciones(textoExtraido);
+      }
 
-    const { error: uploadError } = await supabase.storage
-      .from("archivos-clases")
-      .upload(`clases/${clase.id}/${nombreArchivo}`, file);
+      const { error: uploadError } = await supabase.storage
+        .from("archivos-clases")
+        .upload(`clases/${clase.id}/${nombreArchivo}`, file);
 
-    if (uploadError) {
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("archivos-clases")
+        .getPublicUrl(`clases/${clase.id}/${nombreArchivo}`);
+
+      const { error: insertError } = await supabase.from("materiales").insert({
+        clase_id: clase.id, // ✅ Ya no necesita conversión, ambos son UUID
+        titulo: archivoAdjunto.nombre,
+        archivo_url: urlData.publicUrl,
+        archivo_tipo: file.type,
+        archivo_nombre: archivoAdjunto.nombre,
+        contenido: textoExtraido,
+        auto_adaptaciones: adaptaciones,
+      });
+
+      if (insertError) throw insertError;
+
+      setArchivoAdjunto(null);
+      setMensajeError("");
+      cargarMateriales();
+      
+      alert("✅ Material subido correctamente");
+      
+    } catch (err) {
+      console.error("❌ Error subiendo material:", err);
+      setMensajeError("Error al subir el material: " + err.message);
+    } finally {
       setSubiendo(false);
-      return setMensajeError("Error subiendo archivo.");
     }
-
-    const { data: urlData } = supabase.storage
-      .from("archivos-clases")
-      .getPublicUrl(`clases/${clase.id}/${nombreArchivo}`);
-
-    await supabase.from("materiales").insert({
-      clase_id: clase.id,
-      titulo: archivoAdjunto.nombre,
-      archivo_url: urlData.publicUrl,
-      archivo_tipo: file.type,
-      archivo_nombre: archivoAdjunto.nombre,
-      fecha_subida: Date.now(),
-      contenido: textoExtraido,
-      auto_adaptaciones: adaptaciones,
-    });
-
-    setSubiendo(false);
-    cargarMateriales();
   };
 
   /* ============================================================
-      PUBLICAR ANUNCIO
+      PUBLICAR ANUNCIO - CORREGIDO
   ============================================================ */
   const publicarAnuncio = async () => {
-    if (!nuevoAnuncio.trim()) return;
+    const textoTrim = nuevoAnuncio.trim();
+    
+    if (!textoTrim) {
+      alert("⚠️ Escribe algo antes de publicar");
+      return;
+    }
 
-    const { error } = await supabase.from("anuncios").insert({
-      clase_id: clase.id,
-      texto: nuevoAnuncio.trim(),
-      fecha: new Date().toISOString(),
-    });
+    try {
+      console.log("📢 Publicando anuncio...", {
+        clase_id: clase.id,
+        texto: textoTrim,
+      });
 
-    setDebugMsg((m) => m + `\nINSERT anuncio error?: ${JSON.stringify(error)}`);
+      const { data, error } = await supabase
+        .from("anuncios")
+        .insert({
+          clase_id: clase.id, // ✅ Ya no necesita conversión, ambos son UUID
+          texto: textoTrim,
+        })
+        .select();
 
-    setNuevoAnuncio("");
-    cargarAnuncios();
+      if (error) {
+        console.error("❌ Error insertando anuncio:", error);
+        throw error;
+      }
+
+      console.log("✅ Anuncio insertado correctamente:", data);
+
+      // Limpiar el textarea
+      setNuevoAnuncio("");
+      
+      // Recargar anuncios
+      await cargarAnuncios();
+      
+      alert("✅ Anuncio publicado correctamente");
+      
+    } catch (err) {
+      console.error("❌ Error publicando anuncio:", err);
+      alert("❌ Error al publicar el anuncio: " + err.message);
+    }
   };
 
   /* ============================================================
-      SIMULAR TARJETAS DE MATERIALES PARA ANUNCIOS
+      COMBINAR ANUNCIOS Y MATERIALES
   ============================================================ */
   const materialesVirtuales = anuncios.map((a) => ({
     id: `anuncio-${a.id}`,
@@ -183,40 +221,21 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
       RENDER
   ============================================================ */
   return (
-    <div className="min-h-screen p-6 bg-slate-50 relative">
-      {/* DEBUG OVERLAY VISUAL */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 10,
-          right: 10,
-          background: "black",
-          color: "lime",
-          fontSize: "12px",
-          padding: "10px",
-          whiteSpace: "pre-wrap",
-          maxWidth: "350px",
-          maxHeight: "250px",
-          overflowY: "auto",
-          borderRadius: "10px",
-          opacity: 0.85,
-          zIndex: 9999,
-        }}
-      >
-        {debugMsg || "Sin logs todavía..."}
-      </div>
-
+    <div className="min-h-screen p-6 bg-slate-50">
       <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* Botón volver */}
         <button
           onClick={() =>
             setCurrentPage(esAlumno ? "alumno-dashboard" : "profesor-dashboard")
           }
-          className="inline-flex items-center text-indigo-600 font-semibold"
+          className="inline-flex items-center text-indigo-600 font-semibold hover:text-indigo-700"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Volver
         </button>
 
+        {/* Header de la clase */}
         <section className="rounded-3xl p-8 bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl">
           <h1 className="text-3xl font-bold">{clase.nombre}</h1>
           <p className="opacity-80 mt-2">
@@ -224,6 +243,14 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
           </p>
         </section>
 
+        {/* Mensajes de error */}
+        {mensajeError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {mensajeError}
+          </div>
+        )}
+
+        {/* SECCIÓN PROFESOR: Subir materiales */}
         {userType === "profesor" && (
           <aside className="bg-white rounded-3xl shadow-xl p-8 space-y-6">
             <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
@@ -238,25 +265,35 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
                 type="file"
                 accept=".docx"
                 className="hidden"
-                onChange={(e) =>
-                  setArchivoAdjunto({
-                    archivo: e.target.files[0],
-                    nombre: e.target.files[0]?.name,
-                  })
-                }
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setArchivoAdjunto({
+                      archivo: file,
+                      nombre: file.name,
+                    });
+                  }
+                }}
               />
             </label>
 
             {archivoAdjunto && (
-              <p className="text-sm text-slate-500">{archivoAdjunto.nombre}</p>
+              <p className="text-sm text-slate-500">
+                📄 {archivoAdjunto.nombre}
+              </p>
             )}
 
-            <button onClick={subirMaterial} className="btn-primary w-full">
-              Subir material
+            <button
+              onClick={subirMaterial}
+              disabled={subiendo || !archivoAdjunto}
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {subiendo ? "Subiendo..." : "Subir material"}
             </button>
           </aside>
         )}
 
+        {/* SECCIÓN PROFESOR: Publicar anuncios */}
         {userType === "profesor" && (
           <aside className="bg-white rounded-3xl shadow-xl p-8 space-y-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -265,7 +302,7 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
             </h2>
 
             <textarea
-              className="w-full p-4 border rounded-xl"
+              className="w-full p-4 border rounded-xl focus:border-indigo-500 focus:outline-none"
               placeholder="Escribe un anuncio para tus alumnos..."
               value={nuevoAnuncio}
               onChange={(e) => setNuevoAnuncio(e.target.value)}
@@ -274,7 +311,8 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
 
             <button
               onClick={publicarAnuncio}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              disabled={!nuevoAnuncio.trim()}
+              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
               Publicar anuncio
@@ -282,15 +320,15 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
           </aside>
         )}
 
-        {/* LISTA FINAL */}
+        {/* LISTA DE MATERIALES Y ANUNCIOS */}
         <section className="rounded-3xl shadow-xl p-8 bg-white">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-500" />
-            Materiales accesibles
+            <Megaphone className="w-5 h-5 text-indigo-500" />
+            Materiales y Anuncios
           </h2>
 
           {listaCompleta.length === 0 ? (
-            <p className="text-center text-slate-500">
+            <p className="text-center text-slate-500 py-8">
               No hay materiales ni anuncios todavía.
             </p>
           ) : (
