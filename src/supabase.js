@@ -1,48 +1,95 @@
-// src/supabase.js
+// ===============================
+//  Supabase Client
+// ===============================
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = "https://kvuuphcokiyracoxyvjq.supabase.co";
-const supabaseAnonKey =
+// ===============================
+//   PDF.js — IMPORT SEGURO
+// ===============================
+import * as pdfjsLib from "pdfjs-dist";
+
+// Worker correcto para evitar errores
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+const SUPABASE_URL = "https://kvuuphcokiyracoxyvjq.supabase.co";
+const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dXVwaGNva2l5cmFjb3h5dmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MDIyOTksImV4cCI6MjA3OTI3ODI5OX0.dfXeBZEOBqcc4rkz_SJX9z5xW7TGsMc4xw6emNlr8QM";
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* -------------------------------------------------------------
-   FUNCIONES DE ADAPTACIÓN DE TEXTO
-------------------------------------------------------------- */
-
+// =======================================================================
+//   MOTOR DE ADAPTACIÓN DE TEXTOS — VERSIÓN FINAL
+// =======================================================================
 export const adaptarTexto = {
-  extraerTexto: async (archivo) => {
-    // Puedes sustituir esto por mammoth o pdf-parse
-    return "Texto extraído del documento...";
+  /* -------------------------------------------------------------
+     EXTRAER TEXTO DE PDF
+  ------------------------------------------------------------- */
+  extraerTextoPDF: async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+
+      const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer,
+      }).promise;
+
+      let texto = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        texto += content.items.map((t) => t.str).join(" ") + "\n\n";
+      }
+
+      return texto.trim();
+    } catch (err) {
+      console.error("❌ Error leyendo PDF:", err);
+      return "";
+    }
   },
 
+  /* -------------------------------------------------------------
+     LECTURA FÁCIL (simplificación por párrafos)
+  ------------------------------------------------------------- */
   generarLecturaFacil: (texto) => {
     if (!texto) return "";
+
     const oraciones = texto.split(/[.!?]+/);
 
-    const simplificadas = oraciones.map((o) => {
-      const palabras = o.trim().split(" ");
-      if (palabras.length > 15) {
-        const fragmentos = [];
-        for (let i = 0; i < palabras.length; i += 12) {
-          fragmentos.push(palabras.slice(i, i + 12).join(" "));
+    return oraciones
+      .map((o) => {
+        const palabras = o.trim().split(" ");
+        if (palabras.length > 15) {
+          const partes = [];
+          for (let i = 0; i < palabras.length; i += 12) {
+            partes.push(palabras.slice(i, i + 12).join(" "));
+          }
+          return partes.join(".\n\n");
         }
-        return fragmentos.join(".\n\n");
-      }
-      return o.trim();
-    });
-
-    return simplificadas.join(".\n\n");
+        return o.trim();
+      })
+      .join(".\n\n");
   },
 
+  /* -------------------------------------------------------------
+     RESUMEN AUTOMÁTICO
+  ------------------------------------------------------------- */
   generarResumen: (texto) => {
     if (!texto) return "";
-    const oraciones = texto.split(/[.!?]+/).filter((o) => o.trim());
-    const resumen = oraciones.slice(0, Math.min(5, oraciones.length));
-    return "• " + resumen.map((o) => o.trim()).join(".\n\n• ") + ".";
+
+    const oraciones = texto
+      .split(/[.!?]+/)
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const primeras = oraciones.slice(0, 5);
+
+    return "• " + primeras.join(".\n\n• ") + ".";
   },
 
+  /* -------------------------------------------------------------
+     VERSION SIMPLIFICADA
+  ------------------------------------------------------------- */
   generarVersionSimplificada: (texto) => {
     if (!texto) return "";
 
@@ -54,72 +101,71 @@ export const adaptarTexto = {
       .replace(/\b(iniciar|comenzar)\b/gi, "empezar");
 
     const oraciones = simple.split(/[.!?]+/);
-    const simplificadas = oraciones.map((o) => {
-      const palabras = o.trim().split(" ");
-      if (palabras.length > 20) {
-        return palabras.slice(0, 18).join(" ") + "...";
-      }
-      return o.trim();
-    });
 
-    return simplificadas.join(". ");
+    return oraciones
+      .map((o) => {
+        const palabras = o.trim().split(" ");
+        return palabras.length > 20
+          ? palabras.slice(0, 18).join(" ") + "..."
+          : o.trim();
+      })
+      .join(". ");
   },
 
   /* -------------------------------------------------------------
-     GENERA TODAS LAS ADAPTACIONES AUTOMÁTICAMENTE
-     (SE USA AL SUBIR UN WORD)
+     GENERA TODAS LAS ADAPTACIONES
   ------------------------------------------------------------- */
   generarTodasAdaptaciones: (textoBase) => {
+    if (!textoBase) return null;
+
     return {
-      textoBase: textoBase,
+      textoBase,
+
       resumen: adaptarTexto.generarResumen(textoBase),
+
       versionSimplificada: adaptarTexto.generarVersionSimplificada(textoBase),
+
       lecturaFacil: adaptarTexto.generarLecturaFacil(textoBase),
+
       transcripcion: textoBase,
+
       formatoFuente: "texto",
 
-      /* ------------------------------------------
-         ARCHIVOS ACCESIBLES PARA DESCARGAR
-      ------------------------------------------ */
       conversionesAccesibles: [
         {
-          id: "txt-simple",
+          id: "txt",
           tipo: "txt",
           titulo: "Versión texto plano",
           contenido: textoBase,
         },
-
         {
           id: "html-accesible",
           tipo: "html",
-          titulo: "Versión HTML accesible",
-          contenido: `<!DOCTYPE html>
+          titulo: "HTML accesible (OpenDyslexic)",
+          contenido: `
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Documento Accesible</title>
   <style>
     body {
       font-family: 'OpenDyslexic', Arial, sans-serif;
       font-size: 18px;
       line-height: 1.8;
-      max-width: 800px;
-      margin: 40px auto;
+      background: #FFFBEA;
       padding: 20px;
-      background: #FFFEF7;
       color: #1a1a1a;
+      max-width: 900px;
+      margin: auto;
     }
-    p { margin-bottom: 1.5em; }
+    p { margin-bottom: 1.4rem; }
   </style>
 </head>
 <body>
-  <div>
-  ${textoBase
-    .split("\n")
-    .map((p) => `<p>${p}</p>`)
-    .join("\n")}
-  </div>
+${textoBase
+  .split("\n")
+  .map((p) => `<p>${p}</p>`)
+  .join("\n")}
 </body>
 </html>`,
         },

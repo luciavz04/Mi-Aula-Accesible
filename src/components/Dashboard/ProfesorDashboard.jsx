@@ -41,10 +41,19 @@ function ProfesorDashboard({
   }, [cargarClases]);
 
   // 🔸 Abrir clase
-  const abrirClase = (clase) => {
-    setSelectedClase(clase);
-    setCurrentPage("vista-clase");
-  };
+ const abrirClase = (clase) => {
+  // Asegura que SIEMPRE pasamos los campos necesarios
+  setSelectedClase({
+    id: clase.id,
+    nombre: clase.nombre,
+    profesor_nombre: clase.profesor_nombre,
+    alumnos: clase.alumnos || [],
+    fecha_creacion: clase.fecha_creacion
+  });
+
+  setCurrentPage("vista-clase");
+};
+
 
   // 🔸 Editar clase
   const editarClase = (clase) => {
