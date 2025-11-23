@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { LogOut, Plus, BookOpen, Users, UserPlus, Pencil, Trash2 } from "lucide-react";
-import { db } from "../../firebase";
-import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
+import {
+  LogOut,
+  Plus,
+  BookOpen,
+  Users,
+  UserPlus,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { supabase } from "../../supabase";
 
 function ProfesorDashboard({
   currentUser,
@@ -12,16 +19,18 @@ function ProfesorDashboard({
 }) {
   const [clases, setClases] = useState([]);
 
-  // 🔹 Cargar clases del profesor
+  // 🔹 Cargar clases del profesor desde Supabase
   const cargarClases = useCallback(async () => {
     try {
-      const q = query(collection(db, "clases"), where("profesorId", "==", currentUser.id));
-      const snapshot = await getDocs(q);
-      const clasesProfesor = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setClases(clasesProfesor);
+      const { data, error } = await supabase
+        .from("clases")
+        .select("*")
+        .eq("profesor_id", currentUser.id)
+        .order("fecha_creacion", { ascending: false });
+
+      if (error) throw error;
+
+      setClases(data || []);
     } catch (err) {
       console.error("Error cargando clases:", err);
     }
@@ -45,10 +54,18 @@ function ProfesorDashboard({
 
   // 🔸 Eliminar clase
   const eliminarClase = async (claseId) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta clase? Esta acción no se puede deshacer.")) return;
+    if (
+      !window.confirm(
+        "¿Seguro que deseas eliminar esta clase? Esta acción no se puede deshacer."
+      )
+    )
+      return;
 
     try {
-      await deleteDoc(doc(db, "clases", claseId));
+      const { error } = await supabase.from("clases").delete().eq("id", claseId);
+
+      if (error) throw error;
+
       setClases((prev) => prev.filter((c) => c.id !== claseId));
     } catch (err) {
       console.error("Error al eliminar la clase:", err);
@@ -97,6 +114,7 @@ function ProfesorDashboard({
             <p className="text-sm text-indigo-200">Profesor</p>
             <p className="font-medium">{currentUser?.nombre}</p>
           </div>
+
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center space-x-3 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
@@ -138,7 +156,7 @@ function ProfesorDashboard({
                 key={clase.id}
                 className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow border border-gray-100 p-6 flex flex-col justify-between"
               >
-                {/* Encabezado de clase */}
+                {/* Encabezado */}
                 <div className="flex items-center justify-between mb-4">
                   <h3
                     onClick={() => abrirClase(clase)}
@@ -146,6 +164,7 @@ function ProfesorDashboard({
                   >
                     {clase.nombre}
                   </h3>
+
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => editarClase(clase)}
@@ -154,6 +173,7 @@ function ProfesorDashboard({
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
+
                     <button
                       onClick={() => eliminarClase(clase.id)}
                       className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition"
@@ -169,11 +189,12 @@ function ProfesorDashboard({
                   <Users className="w-5 h-5 mr-2 text-indigo-500" />
                   <span>{clase.alumnos?.length || 0} alumnos</span>
                 </div>
+
                 <div className="flex items-center text-sm text-gray-500">
                   <BookOpen className="w-4 h-4 mr-1 text-indigo-400" />
                   <span>
                     Creada el{" "}
-                    {new Date(clase.fechaCreacion).toLocaleDateString()}
+                    {new Date(clase.fecha_creacion).toLocaleDateString()}
                   </span>
                 </div>
               </div>

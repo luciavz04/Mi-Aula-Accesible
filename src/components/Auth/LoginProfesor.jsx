@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { db } from "../../firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { supabase } from "../../supabase";
 import { ArrowLeft, LogIn } from "lucide-react";
 
 function LoginProfesor({ setCurrentPage, setCurrentUser, setUserType }) {
@@ -15,30 +14,27 @@ function LoginProfesor({ setCurrentPage, setCurrentUser, setUserType }) {
     setLoading(true);
 
     try {
-      // 🔍 Buscar en Firestore un profesor con el email indicado
-      const q = query(collection(db, "profesores"), where("email", "==", email));
-      const snapshot = await getDocs(q);
+      const { data, error } = await supabase
+        .from('profesores')
+        .select('*')
+        .eq('email', email)
+        .single();
 
-      if (snapshot.empty) {
+      if (error || !data) {
         setError("❌ No existe ninguna cuenta con este correo.");
         setLoading(false);
         return;
       }
 
-      // ✅ Si el email existe, comprobamos la contraseña
-      const profesorDoc = snapshot.docs[0];
-      const profesor = { id: profesorDoc.id, ...profesorDoc.data() };
-
-      if (profesor.password !== password) {
+      if (data.password !== password) {
         setError("🔒 Contraseña incorrecta.");
         setLoading(false);
         return;
       }
 
-      // 🟢 Login correcto
-      setCurrentUser(profesor);
+      setCurrentUser(data);
       setUserType("profesor");
-      localStorage.setItem("currentUser", JSON.stringify(profesor));
+      localStorage.setItem("currentUser", JSON.stringify(data));
       localStorage.setItem("userType", "profesor");
       setCurrentPage("profesor-dashboard");
     } catch (err) {
@@ -48,12 +44,10 @@ function LoginProfesor({ setCurrentPage, setCurrentUser, setUserType }) {
       setLoading(false);
     }
   };
- 
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        {/* Volver */}
         <button
           onClick={() => setCurrentPage("home")}
           className="flex items-center text-indigo-600 hover:text-indigo-700 mb-6"
@@ -62,20 +56,17 @@ function LoginProfesor({ setCurrentPage, setCurrentUser, setUserType }) {
           Volver
         </button>
 
-        {/* Título */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">Acceso Profesor</h2>
           <p className="text-gray-600 mt-2">Inicia sesión con tu cuenta</p>
         </div>
 
-        {/* Mensajes de error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {error}
           </div>
         )}
 
-        {/* Formulario */}
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -117,7 +108,6 @@ function LoginProfesor({ setCurrentPage, setCurrentUser, setUserType }) {
           </button>
         </form>
 
-        {/* Ir al registro */}
         <div className="mt-6 text-center">
           <button
             onClick={() => setCurrentPage("registro-profesor")}

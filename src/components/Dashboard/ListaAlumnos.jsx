@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Users, Edit3, Save, XCircle } from "lucide-react";
-import { db } from "../../firebase";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { supabase } from "../../supabase";
 
 function ListaAlumnos({ setCurrentPage }) {
   const [alumnos, setAlumnos] = useState([]);
@@ -10,26 +9,28 @@ function ListaAlumnos({ setCurrentPage }) {
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(true);
 
-  // 🔹 Cargar alumnos desde Firebase
+  // 🔹 Cargar alumnos desde Supabase
   useEffect(() => {
     const cargarAlumnos = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "alumnos"));
-        const lista = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAlumnos(lista);
+        const { data, error } = await supabase
+          .from("alumnos")
+          .select("*")
+          .order("nombre", { ascending: true });
+
+        if (error) throw error;
+        setAlumnos(data || []);
       } catch (error) {
         console.error("Error cargando alumnos:", error);
       } finally {
         setCargando(false);
       }
     };
+
     cargarAlumnos();
   }, []);
 
-  // 🔹 Manejar cambios en el formulario de edición
+  // 🔹 Manejar cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -38,18 +39,26 @@ function ListaAlumnos({ setCurrentPage }) {
     }));
   };
 
-  // 🔹 Guardar cambios en Firestore
+  // 🔹 Guardar cambios en Supabase
   const guardarCambios = async (id) => {
     try {
-      const ref = doc(db, "alumnos", id);
-      await updateDoc(ref, formData);
+      const { error } = await supabase
+        .from("alumnos")
+        .update(formData)
+        .eq("id", id);
+
+      if (error) throw error;
 
       setAlumnos((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, ...formData } : a))
+        prev.map((a) =>
+          a.id === id ? { ...a, ...formData } : a
+        )
       );
+
       setMensaje("✅ Alumno actualizado correctamente");
       setEditando(null);
       setFormData({});
+
       setTimeout(() => setMensaje(""), 2000);
     } catch (error) {
       console.error("Error actualizando alumno:", error);
@@ -60,13 +69,13 @@ function ListaAlumnos({ setCurrentPage }) {
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8">
-        {/* 🔙 Volver */}
+
+        {/* Volver */}
         <button
           onClick={() => setCurrentPage("profesor-dashboard")}
           className="flex items-center text-indigo-600 hover:text-indigo-800 mb-6"
         >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Volver al Dashboard
+          <ArrowLeft className="w-5 h-5 mr-2" /> Volver al Dashboard
         </button>
 
         <h1 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -98,13 +107,10 @@ function ListaAlumnos({ setCurrentPage }) {
                   <th className="px-4 py-3 text-center">Acciones</th>
                 </tr>
               </thead>
+
               <tbody>
                 {alumnos.map((alumno) => (
-                  <tr
-                    key={alumno.id}
-                    className="border-t hover:bg-gray-50 transition-all"
-                  >
-                    {/* Si está en modo edición */}
+                  <tr key={alumno.id} className="border-t hover:bg-gray-50">
                     {editando === alumno.id ? (
                       <>
                         <td className="px-3 py-2">
@@ -115,6 +121,7 @@ function ListaAlumnos({ setCurrentPage }) {
                             className="w-full border rounded-md px-2 py-1"
                           />
                         </td>
+
                         <td className="px-3 py-2">
                           <input
                             name="apellidos"
@@ -123,6 +130,7 @@ function ListaAlumnos({ setCurrentPage }) {
                             className="w-full border rounded-md px-2 py-1"
                           />
                         </td>
+
                         <td className="px-3 py-2">
                           <input
                             name="usuario"
@@ -131,6 +139,7 @@ function ListaAlumnos({ setCurrentPage }) {
                             className="w-full border rounded-md px-2 py-1"
                           />
                         </td>
+
                         <td className="px-3 py-2">
                           <input
                             name="password"
@@ -140,6 +149,7 @@ function ListaAlumnos({ setCurrentPage }) {
                             className="w-full border rounded-md px-2 py-1"
                           />
                         </td>
+
                         <td className="px-3 py-2">
                           <input
                             name="dni"
@@ -148,6 +158,7 @@ function ListaAlumnos({ setCurrentPage }) {
                             className="w-full border rounded-md px-2 py-1"
                           />
                         </td>
+
                         <td className="px-3 py-2">
                           <input
                             name="claseNombre"
@@ -156,6 +167,7 @@ function ListaAlumnos({ setCurrentPage }) {
                             className="w-full border rounded-md px-2 py-1"
                           />
                         </td>
+
                         <td className="px-3 py-2">
                           <input
                             name="necesidades"
@@ -175,6 +187,7 @@ function ListaAlumnos({ setCurrentPage }) {
                             className="w-full border rounded-md px-2 py-1"
                           />
                         </td>
+
                         <td className="px-3 py-2 text-center flex justify-center gap-2">
                           <button
                             onClick={() => guardarCambios(alumno.id)}
@@ -194,16 +207,13 @@ function ListaAlumnos({ setCurrentPage }) {
                         </td>
                       </>
                     ) : (
-                      // Modo normal
                       <>
                         <td className="px-3 py-2">{alumno.nombre}</td>
                         <td className="px-3 py-2">{alumno.apellidos}</td>
                         <td className="px-3 py-2">{alumno.usuario}</td>
                         <td className="px-3 py-2">{alumno.password}</td>
                         <td className="px-3 py-2">{alumno.dni}</td>
-                        <td className="px-3 py-2">
-                          {alumno.claseNombre || "—"}
-                        </td>
+                        <td className="px-3 py-2">{alumno.claseNombre || "—"}</td>
                         <td className="px-3 py-2">
                           {alumno.necesidades?.length
                             ? alumno.necesidades.join(", ")
@@ -225,6 +235,7 @@ function ListaAlumnos({ setCurrentPage }) {
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
         )}

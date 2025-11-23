@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, LogIn } from 'lucide-react';
-import { db } from '../../firebase';
-import { collection, getDocs, limit, query, where } from 'firebase/firestore';
+import { supabase } from '../../supabase';
 
 function LoginAlumno({ setCurrentPage, setCurrentUser, setUserType }) {
   const [usuario, setUsuario] = useState('');
@@ -20,30 +19,25 @@ function LoginAlumno({ setCurrentPage, setCurrentUser, setUserType }) {
         return;
       }
 
-      const q = query(
-        collection(db, 'alumnos'),
-        where('usuario', '==', usuarioNormalizado),
-        limit(1)
-      );
+      const { data, error } = await supabase
+        .from('alumnos')
+        .select('*')
+        .eq('usuario', usuarioNormalizado)
+        .single();
 
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
+      if (error || !data) {
         setError('No se encontró un alumno con ese usuario');
         return;
       }
 
-      const alumnoDoc = snapshot.docs[0];
-      const alumno = { id: alumnoDoc.id, ...alumnoDoc.data() };
-
-      if (alumno.password !== password) {
+      if (data.password !== password) {
         setError('Usuario o contraseña incorrectos');
         return;
       }
 
-      setCurrentUser(alumno);
+      setCurrentUser(data);
       setUserType('alumno');
-      localStorage.setItem('currentUser', JSON.stringify(alumno));
+      localStorage.setItem('currentUser', JSON.stringify(data));
       localStorage.setItem('userType', 'alumno');
       setCurrentPage('alumno-dashboard');
     } catch (err) {
@@ -53,7 +47,7 @@ function LoginAlumno({ setCurrentPage, setCurrentUser, setUserType }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-md w-full">
         <button
           onClick={() => setCurrentPage('home')}

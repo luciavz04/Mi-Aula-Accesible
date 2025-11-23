@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Plus, X, Save, Loader2 } from "lucide-react";
-import { db } from "../../firebase";
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-} from "firebase/firestore";
+import { supabase } from "../../supabase";
 
 function EditarClase({ clase, setCurrentPage }) {
   const [nombre, setNombre] = useState(clase?.nombre || "");
@@ -18,58 +10,77 @@ function EditarClase({ clase, setCurrentPage }) {
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(true);
 
-  // 🔹 Cargar todos los alumnos desde Firebase
+  // 🔹 Cargar alumnos desde Supabase
   useEffect(() => {
     const cargarAlumnos = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "alumnos"));
-        const lista = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const { data, error } = await supabase
+          .from("alumnos")
+          .select("*")
+          .order("nombre", { ascending: true });
 
-        // Dividimos entre los que ya están en la clase y los disponibles
-        const enClase = lista.filter((a) => clase.alumnos?.includes(a.id));
-        const fueraClase = lista.filter((a) => !clase.alumnos?.includes(a.id));
+        if (error) throw error;
+
+        const enClase = data.filter((a) => clase.alumnos?.includes(a.id));
+        const fueraClase = data.filter((a) => !clase.alumnos?.includes(a.id));
 
         setAlumnosEnClase(enClase);
         setAlumnosDisponibles(fueraClase);
-      } catch (error) {
-        console.error("Error cargando alumnos:", error);
+      } catch (err) {
+        console.error("Error cargando alumnos:", err);
       } finally {
         setCargando(false);
       }
     };
+
     cargarAlumnos();
   }, [clase]);
 
+  // 🔹 Actualizar alumno → remover de clase
   const quitarAlumno = async (alumno) => {
     try {
-      const ref = doc(db, "clases", clase.id);
-      await updateDoc(ref, {
-        alumnos: arrayRemove(alumno.id),
-      });
+      const nuevosAlumnos = alumnosEnClase
+        .filter((a) => a.id !== alumno.id)
+        .map((a) => a.id);
+
+      const { error } = await supabase
+        .from("clases")
+        .update({ alumnos: nuevosAlumnos })
+        .eq("id", clase.id);
+
+      if (error) throw error;
+
       setAlumnosEnClase((prev) => prev.filter((a) => a.id !== alumno.id));
       setAlumnosDisponibles((prev) => [...prev, alumno]);
       setMensaje(`🗑️ ${alumno.nombre} eliminado de la clase.`);
-    } catch (error) {
-      console.error("Error eliminando alumno:", error);
+    } catch (err) {
+      console.error(err);
       setMensaje("❌ No se pudo eliminar el alumno.");
     }
   };
 
+  // 🔹 Actualizar alumno → agregar a clase
   const agregarAlumno = async (alumno) => {
     try {
-      const ref = doc(db, "clases", clase.id);
-      await updateDoc(ref, {
-        alumnos: arrayUnion(alumno.id),
-      });
+      const nuevosAlumnos = [...alumnosEnClase.map((a) => a.id), alumno.id];
+
+      const { error } = await supabase
+        .from("clases")
+        .update({ alumnos: nuevosAlumnos })
+        .eq("id", clase.id);
+
+      if (error) throw error;
+
       setAlumnosDisponibles((prev) => prev.filter((a) => a.id !== alumno.id));
       setAlumnosEnClase((prev) => [...prev, alumno]);
       setMensaje(`✅ ${alumno.nombre} añadido a la clase.`);
-    } catch (error) {
-      console.error("Error agregando alumno:", error);
+    } catch (err) {
+      console.error(err);
       setMensaje("❌ No se pudo agregar el alumno.");
     }
   };
 
+  // 🔹 Guardar nombre de la clase
   const guardarNombre = async () => {
     if (!nombre.trim()) {
       setMensaje("⚠️ El nombre de la clase no puede estar vacío.");
@@ -77,12 +88,18 @@ function EditarClase({ clase, setCurrentPage }) {
     }
 
     setGuardando(true);
+
     try {
-      const ref = doc(db, "clases", clase.id);
-      await updateDoc(ref, { nombre });
+      const { error } = await supabase
+        .from("clases")
+        .update({ nombre })
+        .eq("id", clase.id);
+
+      if (error) throw error;
+
       setMensaje("✅ Nombre de clase actualizado correctamente.");
-    } catch (error) {
-      console.error("Error actualizando nombre:", error);
+    } catch (err) {
+      console.error(err);
       setMensaje("❌ No se pudo guardar el nombre.");
     } finally {
       setGuardando(false);
@@ -92,6 +109,7 @@ function EditarClase({ clase, setCurrentPage }) {
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+
         <button
           onClick={() => setCurrentPage("profesor-dashboard")}
           className="flex items-center text-indigo-600 hover:text-indigo-800 mb-6"
@@ -140,15 +158,14 @@ function EditarClase({ clase, setCurrentPage }) {
           </div>
         ) : (
           <>
-            {/* Alumnos actuales */}
+            {/* Alumnos en clase */}
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4 text-gray-800">
                 👩‍🏫 Alumnos en esta clase
               </h2>
+
               {alumnosEnClase.length === 0 ? (
-                <p className="text-gray-500">
-                  No hay alumnos en esta clase todavía.
-                </p>
+                <p className="text-gray-500">No hay alumnos en esta clase.</p>
               ) : (
                 <div className="grid md:grid-cols-2 gap-3">
                   {alumnosEnClase.map((a) => (
@@ -162,10 +179,10 @@ function EditarClase({ clase, setCurrentPage }) {
                         </p>
                         <p className="text-sm text-gray-500">{a.usuario}</p>
                       </div>
+
                       <button
                         onClick={() => quitarAlumno(a)}
                         className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition"
-                        title="Eliminar de la clase"
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -175,14 +192,15 @@ function EditarClase({ clase, setCurrentPage }) {
               )}
             </div>
 
-            {/* Alumnos disponibles */}
+            {/* Añadir alumnos */}
             <div>
               <h2 className="text-xl font-semibold mb-4 text-gray-800">
                 ➕ Añadir nuevos alumnos
               </h2>
+
               {alumnosDisponibles.length === 0 ? (
                 <p className="text-gray-500">
-                  No hay más alumnos disponibles para añadir.
+                  No hay más alumnos disponibles.
                 </p>
               ) : (
                 <div className="grid md:grid-cols-2 gap-3">
@@ -197,10 +215,10 @@ function EditarClase({ clase, setCurrentPage }) {
                         </p>
                         <p className="text-sm text-gray-500">{a.usuario}</p>
                       </div>
+
                       <button
                         onClick={() => agregarAlumno(a)}
                         className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition"
-                        title="Agregar a la clase"
                       >
                         <Plus className="w-5 h-5" />
                       </button>

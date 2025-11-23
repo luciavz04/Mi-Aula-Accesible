@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { db } from "../../firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { supabase } from "../../supabase";
 import { ArrowLeft } from "lucide-react";
 
 function RegistrarAlumno({ setCurrentPage }) {
@@ -40,22 +39,31 @@ function RegistrarAlumno({ setCurrentPage }) {
     }
 
     try {
-      await addDoc(collection(db, "alumnos"), {
+      const { error } = await supabase.from("alumnos").insert({
         nombre,
         apellidos,
         usuario,
         dni,
         password,
         necesidades,
-        fechaRegistro: new Date().toISOString(),
+        fecha_registro: new Date().toISOString(),
       });
-      setMensaje("✅ Alumno registrado correctamente en Firestore");
+
+      if (error) {
+        console.error("Error Supabase:", error);
+        setMensaje("❌ Error al guardar el alumno.");
+        return;
+      }
+
+      setMensaje("✅ Alumno registrado correctamente en Supabase");
       setNombre("");
       setApellidos("");
       setUsuario("");
       setDni("");
       setPassword("");
       setNecesidades([]);
+
+      setTimeout(() => setMensaje(""), 2500);
     } catch (error) {
       console.error("Error al registrar alumno:", error);
       setMensaje("❌ Error al guardar el alumno.");
@@ -65,6 +73,7 @@ function RegistrarAlumno({ setCurrentPage }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
+
         <div className="flex items-center mb-6">
           <button
             onClick={() => setCurrentPage("profesor-dashboard")}
@@ -91,6 +100,7 @@ function RegistrarAlumno({ setCurrentPage }) {
             onChange={(e) => setNombre(e.target.value)}
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none"
           />
+
           <input
             type="text"
             placeholder="Apellidos"
@@ -98,6 +108,7 @@ function RegistrarAlumno({ setCurrentPage }) {
             onChange={(e) => setApellidos(e.target.value)}
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none"
           />
+
           <input
             type="text"
             placeholder="Usuario"
@@ -105,6 +116,7 @@ function RegistrarAlumno({ setCurrentPage }) {
             onChange={(e) => setUsuario(e.target.value)}
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none"
           />
+
           <input
             type="text"
             placeholder="DNI"
@@ -112,6 +124,7 @@ function RegistrarAlumno({ setCurrentPage }) {
             onChange={(e) => setDni(e.target.value)}
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none"
           />
+
           <input
             type="password"
             placeholder="Contraseña"
@@ -149,6 +162,7 @@ function RegistrarAlumno({ setCurrentPage }) {
             Registrar Alumno
           </button>
         </div>
+
       </div>
     </div>
   );

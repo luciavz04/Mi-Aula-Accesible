@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, CheckSquare, Loader2 } from "lucide-react";
-import { db } from "../../firebase";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { supabase } from "../../supabase";
 
 function CrearClase({ currentUser, setCurrentPage }) {
   const [nombreClase, setNombreClase] = useState("");
@@ -10,22 +9,27 @@ function CrearClase({ currentUser, setCurrentPage }) {
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState("");
 
-  // 🔹 Cargar alumnos desde Firebase
+  // 🔹 Cargar alumnos desde Supabase
   useEffect(() => {
     const cargarAlumnos = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "alumnos"));
-        const lista = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAlumnos(lista);
-      } catch (error) {
-        console.error("Error cargando alumnos:", error);
+        const { data, error } = await supabase
+          .from("alumnos")
+          .select("*")
+          .order("nombre", { ascending: true });
+
+        if (error) {
+          console.error("Error cargando alumnos:", error);
+        } else {
+          setAlumnos(data || []);
+        }
+      } catch (err) {
+        console.error("Error cargando alumnos:", err);
       } finally {
         setCargando(false);
       }
     };
+
     cargarAlumnos();
   }, []);
 
@@ -46,19 +50,28 @@ function CrearClase({ currentUser, setCurrentPage }) {
     }
 
     try {
-      await addDoc(collection(db, "clases"), {
+      const { error } = await supabase.from("clases").insert({
         nombre: nombreClase,
-        profesorId: currentUser.id,
-        profesorNombre: currentUser.nombre,
+        profesor_id: currentUser.id,
+        profesor_nombre: currentUser.nombre,
         alumnos: seleccionados,
-        fechaCreacion: new Date().toISOString(),
+        fecha_creacion: new Date().toISOString(),
       });
+
+      if (error) {
+        console.error("Error creando clase:", error);
+        setMensaje("❌ Error al guardar la clase");
+        return;
+      }
+
       setMensaje("✅ Clase creada correctamente");
       setNombreClase("");
       setSeleccionados([]);
+
       setTimeout(() => setCurrentPage("profesor-dashboard"), 1500);
-    } catch (error) {
-      console.error("Error creando clase:", error);
+
+    } catch (err) {
+      console.error("Error creando clase:", err);
       setMensaje("❌ Error al guardar la clase");
     }
   };
@@ -100,9 +113,7 @@ function CrearClase({ currentUser, setCurrentPage }) {
               Selecciona alumnos para esta clase:
             </h3>
             {alumnos.length === 0 ? (
-              <p className="text-gray-500">
-                No hay alumnos registrados todavía.
-              </p>
+              <p className="text-gray-500">No hay alumnos registrados todavía.</p>
             ) : (
               <div className="grid md:grid-cols-2 gap-3">
                 {alumnos.map((alumno) => (
