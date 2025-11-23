@@ -80,9 +80,6 @@ function AlumnoDashboard({
     if (currentUser?.necesidades?.includes("Dislexia")) {
       setTextoGrande(true);
     }
-    if (currentUser?.necesidades?.includes("TDAH")) {
-      setModoConcentracion(true);
-    }
   }, [currentUser?.necesidades]);
 
   const abrirClase = (clase) => {
