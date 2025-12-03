@@ -174,7 +174,7 @@ function AlumnoDashboard({
               onClick={() => setTextoGrande((v) => !v)}
               className="btn-secondary px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-900"
             >
-              {textoGrande ? "Reducir texto" : "Aumentar texto"}
+              {textoGrande ? "Reducir texto" : "Aumentar el texto"}
             </button>
           </div>
         </section>
