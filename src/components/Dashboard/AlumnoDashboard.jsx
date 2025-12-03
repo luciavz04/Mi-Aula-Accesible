@@ -100,7 +100,7 @@ function AlumnoDashboard({
           <h2 className="text-3xl font-bold mb-2">EduAdapt</h2>
           <p className="text-indigo-200 text-sm mb-8">Panel Alumno</p>
 
-          <nav className="space-y-3">
+          <nav className="space-y-6">
             <button className="w-full flex items-center gap-3 p-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 transition">
               <BookOpen className="w-5 h-5" />
               Mis Clases

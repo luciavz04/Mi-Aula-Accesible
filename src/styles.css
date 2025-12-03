@@ -30,19 +30,19 @@ body {
 
 /* AZULES Y MORADOS ACTUALIZADOS */
 .bg-indigo-700 {
-  background-color: #1E40AF;
+  background-color: #708be1;
 }
 
 .bg-indigo-600 {
-  background-color: #4F46E5;
+  background-color: #8782ef;
 }
 
 .bg-indigo-500 {
-  background-color: #6366F1;
+  background-color: #8486f6;
 }
 
 .bg-blue-600 {
-  background-color: #2563EB;
+  background-color: #6c97f5;
 }
 
 .bg-blue-500 {
@@ -92,7 +92,7 @@ body {
 
 /* TEXTO AZUL/MORADO ACTUALIZADO */
 .text-indigo-600 {
-  color: #4F46E5;
+  color: #7973e8;
 }
 
 .text-indigo-200 {
@@ -100,11 +100,11 @@ body {
 }
 
 .text-blue-600 {
-  color: #2563EB;
+  color: #7699e5;
 }
 
 .text-blue-700 {
-  color: #1E40AF;
+  color: #708ce8;
 }
 
 .text-blue-200 {
@@ -356,7 +356,7 @@ button:disabled {
 }
 
 .hover\:bg-blue-700:hover {
-  background-color: #1E40AF;
+  background-color: #7693f6;
 }
 
 .hover\:bg-blue-50:hover {
@@ -384,7 +384,7 @@ button:disabled {
 }
 
 .hover\:text-indigo-700:hover {
-  color: #4338CA;
+  color: #8c83f3;
 }
 
 .hover\:text-gray-800:hover {
@@ -412,7 +412,7 @@ input, textarea {
 }
 
 input:focus, textarea:focus {
-  outline: 2px solid #4F46E5;
+  outline: 2px solid #706aeb;
   outline-offset: 2px;
 }
 
@@ -560,8 +560,8 @@ input[type="checkbox"]:hover {
 }
 
 input[type="checkbox"]:checked {
-  background-color: #4F46E5;
-  border-color: #4F46E5;
+  background-color: #7c8fef;
+  border-color: #5a64ec;
 }
 
 input[type="checkbox"]:checked::after {
@@ -669,7 +669,7 @@ label.checkbox-label:hover {
 }
 /* Botones principales */
 .btn-primary {
-  background-color: #4F46E5; /* morado */
+  background-color: #7987ee; /* morado */
   color: white;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
@@ -805,12 +805,12 @@ textarea::placeholder {
 /* Sobrescribimos por si algo quedaba con tonos viejos */
 
 /* FONDOS */
-.bg-indigo-700      { background-color: #4338CA !important; }
-.bg-indigo-600      { background-color: #4F46E5 !important; }
-.bg-indigo-500      { background-color: #6366F1 !important; }
+.bg-indigo-700      { background-color: #9187fd !important; }
+.bg-indigo-600      { background-color: #7873e6 !important; }
+.bg-indigo-500      { background-color: #8688ef !important; }
 
-.bg-blue-600        { background-color: #2563EB !important; }
-.bg-blue-500        { background-color: #3B82F6 !important; }
+.bg-blue-600        { background-color: #497cec !important; }
+.bg-blue-500        { background-color: #85acec !important; }
 .bg-blue-200        { background-color: #BFDBFE !important; }
 .bg-blue-100        { background-color: #DBEAFE !important; }
 
@@ -818,9 +818,9 @@ textarea::placeholder {
 .text-indigo-600    { color: #4F46E5 !important; }
 .text-indigo-200    { color: #C7D2FE !important; }
 
-.text-blue-700      { color: #1D4ED8 !important; }
-.text-blue-600      { color: #2563EB !important; }
-.text-blue-500      { color: #3B82F6 !important; }
+.text-blue-700      { color: #6e7bef !important; }
+.text-blue-600      { color: #5284f1 !important; }
+.text-blue-500      { color: #7ba7ee !important; }
 
 /* HOVERS */
 .hover\:bg-indigo-700:hover { background-color: #4338CA !important; }
@@ -869,13 +869,13 @@ h4, h5, h6 {
 /* BOTONES ESPECIALES */
 button.primary,
 button.btn-primary {
-  background-color: #4F46E5;
+  background-color: #9490e5;
   color: white;
 }
 
 button.primary:hover,
 button.btn-primary:hover {
-  background-color: #4338CA;
+  background-color: #6e67c3;
 }
 
 /* SLIDER / SWITCH (si aparece en tu UI) */
@@ -897,7 +897,7 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: #4F46E5;
+  border-color: #726cdb;
   box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
 }
 
@@ -955,16 +955,16 @@ a:hover {
 .bg-indigo-500     { background-color:#6366f1; }
 .bg-indigo-600     { background-color:#4f46e5; }
 .bg-indigo-700     { background-color:#4338ca; }
-.bg-indigo-800     { background-color:#3730a3; }
+.bg-indigo-800     { background-color:#6460a2; }
 
 .text-indigo-400   { color:#818cf8; }
 .text-indigo-500   { color:#6366f1; }
 .text-indigo-600   { color:#4f46e5; }
-.text-indigo-700   { color:#4338ca; }
+.text-indigo-700   { color:#6961ca; }
 
-.bg-blue-600       { background-color:#2563eb; }
-.bg-blue-500       { background-color:#3b82f6; }
-.text-blue-600     { color:#2563eb; }
+.bg-blue-600       { background-color:#608def; }
+.bg-blue-500       { background-color:#70a1ef; }
+.text-blue-600     { color:#628eed; }
 
 .bg-emerald-500    { background-color:#10b981; }
 .bg-emerald-600    { background-color:#059669; }

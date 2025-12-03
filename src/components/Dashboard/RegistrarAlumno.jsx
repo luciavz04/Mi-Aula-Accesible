@@ -8,7 +8,7 @@ function RegistrarAlumno({ setCurrentPage }) {
   const [usuario, setUsuario] = useState("");
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
-  const [necesidades, setNecesidades] = useState([]);
+  const [necesidad, setNecesidad] = useState(""); // 🔹 Solo una discapacidad
   const [mensaje, setMensaje] = useState("");
 
   const opcionesNecesidades = [
@@ -20,21 +20,19 @@ function RegistrarAlumno({ setCurrentPage }) {
     "Ninguna",
   ];
 
-  const toggleNecesidad = (opcion) => {
-    if (necesidades.includes(opcion)) {
-      setNecesidades(necesidades.filter((n) => n !== opcion));
-    } else {
-      if (opcion === "Ninguna") {
-        setNecesidades(["Ninguna"]);
-      } else {
-        setNecesidades([...necesidades.filter((n) => n !== "Ninguna"), opcion]);
-      }
-    }
+  const seleccionarNecesidad = (opcion) => {
+    // Si se vuelve a pulsar la misma, se deselecciona
+    setNecesidad((prev) => (prev === opcion ? "" : opcion));
   };
 
   const registrarAlumno = async () => {
     if (!nombre || !apellidos || !usuario || !dni || !password) {
       setMensaje("⚠️ Por favor, completa todos los campos.");
+      return;
+    }
+
+    if (!necesidad) {
+      setMensaje("⚠️ Debes seleccionar una necesidad educativa (o 'Ninguna').");
       return;
     }
 
@@ -45,7 +43,7 @@ function RegistrarAlumno({ setCurrentPage }) {
         usuario,
         dni,
         password,
-        necesidades,
+        necesidades: necesidad, // 🔹 Guarda un único valor
         fecha_registro: new Date().toISOString(),
       });
 
@@ -61,7 +59,7 @@ function RegistrarAlumno({ setCurrentPage }) {
       setUsuario("");
       setDni("");
       setPassword("");
-      setNecesidades([]);
+      setNecesidad("");
 
       setTimeout(() => setMensaje(""), 2500);
     } catch (error) {
@@ -73,7 +71,6 @@ function RegistrarAlumno({ setCurrentPage }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
-
         <div className="flex items-center mb-6">
           <button
             onClick={() => setCurrentPage("profesor-dashboard")}
@@ -135,16 +132,16 @@ function RegistrarAlumno({ setCurrentPage }) {
 
           <div className="mb-4">
             <p className="font-semibold text-gray-700 mb-2">
-              Necesidades educativas:
+              Necesidad educativa (solo una):
             </p>
             <div className="grid grid-cols-2 gap-2">
               {opcionesNecesidades.map((opcion) => (
                 <button
                   key={opcion}
-                  onClick={() => toggleNecesidad(opcion)}
+                  onClick={() => seleccionarNecesidad(opcion)}
                   type="button"
                   className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
-                    necesidades.includes(opcion)
+                    necesidad === opcion
                       ? "border-indigo-400 bg-indigo-100 text-indigo-700"
                       : "border-gray-200 hover:border-indigo-300"
                   }`}
@@ -162,7 +159,6 @@ function RegistrarAlumno({ setCurrentPage }) {
             Registrar Alumno
           </button>
         </div>
-
       </div>
     </div>
   );

@@ -19,7 +19,6 @@ function ProfesorDashboard({
 }) {
   const [clases, setClases] = useState([]);
 
-  // 🔹 Cargar clases del profesor desde Supabase
   const cargarClases = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -29,7 +28,6 @@ function ProfesorDashboard({
         .order("fecha_creacion", { ascending: false });
 
       if (error) throw error;
-
       setClases(data || []);
     } catch (err) {
       console.error("Error cargando clases:", err);
@@ -40,28 +38,22 @@ function ProfesorDashboard({
     cargarClases();
   }, [cargarClases]);
 
-  // 🔸 Abrir clase
- const abrirClase = (clase) => {
-  // Asegura que SIEMPRE pasamos los campos necesarios
-  setSelectedClase({
-    id: clase.id,
-    nombre: clase.nombre,
-    profesor_nombre: clase.profesor_nombre,
-    alumnos: clase.alumnos || [],
-    fecha_creacion: clase.fecha_creacion
-  });
+  const abrirClase = (clase) => {
+    setSelectedClase({
+      id: clase.id,
+      nombre: clase.nombre,
+      profesor_nombre: clase.profesor_nombre,
+      alumnos: clase.alumnos || [],
+      fecha_creacion: clase.fecha_creacion,
+    });
+    setCurrentPage("vista-clase");
+  };
 
-  setCurrentPage("vista-clase");
-};
-
-
-  // 🔸 Editar clase
   const editarClase = (clase) => {
     setClaseParaEditar(clase);
     setCurrentPage("editar-clase");
   };
 
-  // 🔸 Eliminar clase
   const eliminarClase = async (claseId) => {
     if (
       !window.confirm(
@@ -72,9 +64,7 @@ function ProfesorDashboard({
 
     try {
       const { error } = await supabase.from("clases").delete().eq("id", claseId);
-
       if (error) throw error;
-
       setClases((prev) => prev.filter((c) => c.id !== claseId));
     } catch (err) {
       console.error("Error al eliminar la clase:", err);
@@ -91,10 +81,10 @@ function ProfesorDashboard({
             <p className="text-indigo-200 text-sm mt-1">Panel Profesor</p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-6">
             <button
               onClick={() => setCurrentPage("crear-clase")}
-              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-700 hover:bg-indigo-800 rounded-lg transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-300 hover:bg-indigo-400 text-gray-900 font-medium rounded-lg transition-colors"
             >
               <Plus className="w-5 h-5" />
               <span>Crear Nueva Clase</span>
@@ -102,7 +92,7 @@ function ProfesorDashboard({
 
             <button
               onClick={() => setCurrentPage("registrar-alumno")}
-              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-blue-300 hover:bg-blue-400 text-gray-900 font-medium rounded-lg transition-colors"
             >
               <UserPlus className="w-5 h-5" />
               <span>Registrar Alumno</span>
@@ -110,7 +100,7 @@ function ProfesorDashboard({
 
             <button
               onClick={() => setCurrentPage("lista-alumnos")}
-              className="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-green-300 hover:bg-green-400 text-gray-900 font-medium rounded-lg transition-colors"
             >
               <Users className="w-5 h-5" />
               <span>Ver Lista de Alumnos</span>
@@ -152,7 +142,7 @@ function ProfesorDashboard({
             </p>
             <button
               onClick={() => setCurrentPage("crear-clase")}
-              className="inline-flex items-center space-x-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center space-x-2 bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 transition-colors"
             >
               <Plus className="w-5 h-5" />
               <span>Crear Clase</span>
@@ -165,7 +155,6 @@ function ProfesorDashboard({
                 key={clase.id}
                 className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow border border-gray-100 p-6 flex flex-col justify-between"
               >
-                {/* Encabezado */}
                 <div className="flex items-center justify-between mb-4">
                   <h3
                     onClick={() => abrirClase(clase)}
@@ -193,7 +182,6 @@ function ProfesorDashboard({
                   </div>
                 </div>
 
-                {/* Info de clase */}
                 <div className="flex items-center text-gray-600 mb-3">
                   <Users className="w-5 h-5 mr-2 text-indigo-500" />
                   <span>{clase.alumnos?.length || 0} alumnos</span>
