@@ -20,7 +20,7 @@ function MaterialCard({ material, currentUser, userType }) {
   const [contenidoAdaptado, setContenidoAdaptado] = useState("");
   const [mostrarVersionCompleta, setMostrarVersionCompleta] = useState(false);
   const [lecturaEnfocada, setLecturaEnfocada] = useState(false);
-  const [contenidoVisible, setContenidoVisible] = useState(true);
+  const [contenidoVisible, setContenidoVisible] = useState(false);
 
   const [voz, setVoz] = useState(null);
   const [estadoLectura, setEstadoLectura] = useState("stop");
@@ -96,92 +96,80 @@ function MaterialCard({ material, currentUser, userType }) {
     setEstadoLectura("stop");
   };
 
- /* ---------------------------- DESCARGA DOCX PERSONALIZADA ---------------------------- */
-const descargarAdaptado = () => {
-  if (esAnuncio) return;
+  /* ---------------------------- DESCARGA DOCX PERSONALIZADA ---------------------------- */
+  const descargarAdaptado = () => {
+    if (esAnuncio) return;
 
-  const necesidad = currentUser?.necesidades?.[0] || "Ninguna";
+    const necesidad = currentUser?.necesidades?.[0] || "Ninguna";
 
-  // 🔹 Estilo base (sin dificultades)
-  let estilos = `
-    font-family: Arial;
-    font-size: 16px;
-    line-height: 1.6;
-    color: #000000;
-    background-color: #FFFFFF;
-  `;
-
-  let contenidoFinal = contenidoAdaptado.replace(/\n/g, "<p>");
-
-  // 🔹 TDAH → letra grande, interlineado amplio
-  if (necesidad === "TDAH") {
-    estilos = `
+    let estilos = `
       font-family: Arial;
-      font-size: 20px;
-      line-height: 2;
+      font-size: 16px;
+      line-height: 1.6;
       color: #000000;
       background-color: #FFFFFF;
     `;
-  }
 
-  // 🔹 Discapacidad Visual → fondo crema, texto negro, interlineado alto, subrayado
-  else if (necesidad === "Discapacidad Visual") {
-    estilos = `
-      font-family: Arial;
-      font-size: 22px;
-      line-height: 2.2;
-      color: #000000;
+    let contenidoFinal = contenidoAdaptado.replace(/\n/g, "<p>");
+
+    if (necesidad === "TDAH") {
+      estilos = `
+        font-family: Arial;
+        font-size: 20px;
+        line-height: 2;
+        color: #000000;
+        background-color: #FFFFFF;
+      `;
+    } else if (necesidad === "Discapacidad Visual") {
+      estilos = `
+        font-family: Arial;
+        font-size: 22px;
+        line-height: 2.2;
+        color: #000000;
+      `;
+      contenidoFinal = contenidoAdaptado
+        .replace(/\n/g, "<p>")
+        .replace(
+          /(.+?)(<\/p>|$)/g,
+          `<p style="background-color:#FFF9C4; padding:6px 10px;">$1</p>`
+        );
+    } else if (necesidad === "Dislexia") {
+      estilos = `
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        line-height: 1.9;
+        color: #000000;
+        background-color: #FAFAFA;
+      `;
+    }
+
+    const html = `
+      <html>
+        <head><meta charset="UTF-8"></head>
+        <body style="${estilos}">
+          <div style="background-color:${
+            necesidad === "Discapacidad Visual" ? "#FFF9C4" : "#FFFFFF"
+          }; padding: 20px; border-radius: 8px;">
+            ${contenidoFinal}
+          </div>
+        </body>
+      </html>
     `;
 
-    contenidoFinal = contenidoAdaptado
-      .replace(/\n/g, "<p>")
-      .replace(
-        /(.+?)(<\/p>|$)/g,
-        `<p style="background-color:#FFF9C4; text-decoration: underline; text-decoration-color:#FFF9C4; padding:6px 10px;">$1</p>`
-      );
-  }
-
-  // 🔹 Dislexia → letra mayor y más espaciamiento
-  else if (necesidad === "Dislexia") {
-    estilos = `
-      font-family: 'Arial', sans-serif;
-      font-size: 18px;
-      line-height: 1.9;
-      color: #000000;
-      background-color: #FAFAFA;
-    `;
-  }
-
-  // 🔹 HTML final
-  const html = `
-    <html>
-      <head><meta charset="UTF-8"></head>
-      <body style="${estilos}">
-        <div style="background-color:${
-          necesidad === "Discapacidad Visual" ? "#FFF9C4" : "#FFFFFF"
-        }; padding: 20px; border-radius: 8px;">
-          ${contenidoFinal}
-        </div>
-      </body>
-    </html>
-  `;
-
-  // 🔹 Convertimos a DOCX y descargamos
-  const blob = htmlDocx.asBlob(html);
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  const nombreSeguro = (currentUser?.nombre || "alumno").replace(/\s+/g, "_");
-  a.download = `${material.titulo}_${nombreSeguro}_adaptado.docx`;
-  a.click();
-};
-
+    const blob = htmlDocx.asBlob(html);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const nombreSeguro = (currentUser?.nombre || "alumno").replace(/\s+/g, "_");
+    a.download = `${material.titulo}_${nombreSeguro}_adaptado.docx`;
+    a.click();
+  };
 
   /* ---------------------------- ESTILOS ---------------------------- */
   const styleTexto = {
     fontFamily: "Arial",
     fontSize: fontSize,
     backgroundColor: lecturaEnfocada ? "#000" : "#F3F4F6",
-    color: lecturaEnfocada ? "#fff" : "#1F2937",
+    color: "#000000",
     lineHeight: "1.7",
     padding: "16px",
     borderRadius: "12px",
@@ -192,8 +180,12 @@ const descargarAdaptado = () => {
   return (
     <div className="shadow-xl rounded-2xl bg-white overflow-hidden mb-8">
       {/* CABECERA */}
-      <div className={`${esAnuncio ? "bg-yellow-600" : "bg-indigo-600"} p-6`}>
-        <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+      <div className={`${esAnuncio ? "bg-yellow-100" : "bg-indigo-600"} p-6`}>
+        <h3
+          className={`text-2xl font-bold flex items-center gap-2 ${
+            esAnuncio ? "text-black" : "text-white"
+          }`}
+        >
           {esAnuncio ? (
             <>
               <Megaphone className="w-6 h-6" /> Anuncio de clase
@@ -205,8 +197,11 @@ const descargarAdaptado = () => {
           )}
         </h3>
 
-        {/* FECHA */}
-        <p className="text-gray-200 text-sm mt-1 font-medium">
+        <p
+          className={`text-sm mt-1 font-medium ${
+            esAnuncio ? "text-gray-800" : "text-gray-200"
+          }`}
+        >
           {material.fecha_subida
             ? new Date(material.fecha_subida).toLocaleDateString("es-ES", {
                 day: "numeric",
@@ -261,7 +256,7 @@ const descargarAdaptado = () => {
           </div>
         )}
 
-        {/* BOTONES ACCESIBLES (ahora también en anuncios) */}
+        {/* BOTONES ACCESIBLES */}
         {userType === "alumno" && (
           <div className="flex flex-wrap gap-3 pt-2 border-b pb-4">
             <button
@@ -281,7 +276,9 @@ const descargarAdaptado = () => {
             <button
               onClick={() => setLecturaEnfocada((v) => !v)}
               className={`px-3 py-2 rounded-lg flex items-center gap-2 ${
-                lecturaEnfocada ? "bg-indigo-200" : "bg-gray-100 hover:bg-gray-200"
+                lecturaEnfocada
+                  ? "bg-indigo-200"
+                  : "bg-gray-100 hover:bg-gray-200"
               }`}
             >
               <Highlighter className="w-4 h-4" /> Enfocar
