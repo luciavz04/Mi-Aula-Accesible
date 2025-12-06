@@ -67,21 +67,17 @@ function AlumnoDashboard({
   };
 
   /* ===================== ESTILOS ACCESIBLES ===================== */
-
   const fondo = altoContraste ? "bg-slate-900" : "bg-gray-100";
 
-  const tarjeta =
-    altoContraste
-      ? "bg-slate-800 border border-slate-700 text-white"
-      : "bg-white border border-gray-200 shadow-md text-gray-900";
+  const tarjeta = altoContraste
+    ? "bg-slate-800 border border-slate-700 text-white"
+    : "bg-white border border-gray-200 shadow-md text-gray-900";
 
-  const textoSecundario =
-    altoContraste ? "text-slate-300" : "text-gray-600";
+  const textoSecundario = altoContraste ? "text-slate-300" : "text-gray-600";
 
   /* ===================== RENDER ===================== */
   return (
     <div className={`min-h-screen flex ${fondo}`}>
-      
       {/* =============== SIDEBAR =============== */}
       <aside
         className={`w-64 p-6 flex flex-col justify-between shadow-xl ${
@@ -92,15 +88,9 @@ function AlumnoDashboard({
           <h2 className="text-3xl font-bold mb-1">EduAdapt</h2>
           <p className="opacity-70 text-sm mb-8">Panel Alumno</p>
 
-<<<<<<< HEAD
           <nav className="space-y-6">
-            <button className="w-full flex items-center gap-3 p-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 transition">
-=======
-          <nav className="space-y-3">
-
             {/* Mis clases */}
             <button className="w-full flex items-center gap-3 p-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 transition">
->>>>>>> f9d69f1ac19e66e6fb1b2bf2792654c3438767ba
               <BookOpen className="w-5 h-5" />
               Mis Clases
             </button>
@@ -135,7 +125,6 @@ function AlumnoDashboard({
 
       {/* =============== MAIN =============== */}
       <main className="flex-1 p-10 space-y-8">
-
         {/* ENCABEZADO */}
         <header
           className={`rounded-3xl p-10 shadow-xl text-white ${
@@ -165,19 +154,20 @@ function AlumnoDashboard({
           </div>
 
           <div className="flex gap-3 flex-wrap">
-
             {/* Alto contraste */}
             <button
               onClick={() => setAltoContraste((v) => !v)}
-              className="btn-secondary px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-900"
+              className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-900"
             >
-              {altoContraste ? "Desactivar alto contraste" : "Activar alto contraste"}
+              {altoContraste
+                ? "Desactivar alto contraste"
+                : "Activar alto contraste"}
             </button>
 
             {/* Texto grande */}
             <button
               onClick={() => setTextoGrande((v) => !v)}
-              className="btn-secondary px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-900"
+              className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-900"
             >
               {textoGrande ? "Reducir texto" : "Aumentar el texto"}
             </button>
@@ -198,13 +188,11 @@ function AlumnoDashboard({
             <p className={textoSecundario}>Cargando tus clases...</p>
           </div>
         ) : clases.length === 0 ? (
-          
           <div className={`${tarjeta} rounded-2xl p-12 text-center`}>
             <GraduationCap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-1">No tienes clases aún</h3>
             <p className={textoSecundario}>Tu profesor te añadirá pronto.</p>
           </div>
-
         ) : (
           /* LISTA DE CLASES */
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -216,9 +204,7 @@ function AlumnoDashboard({
               >
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <p className="uppercase text-xs text-gray-400">
-                      Clase
-                    </p>
+                    <p className="uppercase text-xs text-gray-400">Clase</p>
                     <h3 className="text-xl font-bold">{clase.nombre}</h3>
                   </div>
 
