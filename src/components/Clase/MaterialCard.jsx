@@ -96,22 +96,85 @@ function MaterialCard({ material, currentUser, userType }) {
     setEstadoLectura("stop");
   };
 
-  /* ---------------------------- DESCARGA DOCX ---------------------------- */
-  const descargarAdaptado = () => {
-    if (esAnuncio) return;
+ /* ---------------------------- DESCARGA DOCX PERSONALIZADA ---------------------------- */
+const descargarAdaptado = () => {
+  if (esAnuncio) return;
 
-    const html = `
-      <html><body style="font-family: Arial; font-size:18px;">
-      ${contenidoAdaptado.replace(/\n/g, "<p>")}
-      </body></html>
+  const necesidad = currentUser?.necesidades?.[0] || "Ninguna";
+
+  // 🔹 Estilo base (sin dificultades)
+  let estilos = `
+    font-family: Arial;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #000000;
+    background-color: #FFFFFF;
+  `;
+
+  let contenidoFinal = contenidoAdaptado.replace(/\n/g, "<p>");
+
+  // 🔹 TDAH → letra grande, interlineado amplio
+  if (necesidad === "TDAH") {
+    estilos = `
+      font-family: Arial;
+      font-size: 20px;
+      line-height: 2;
+      color: #000000;
+      background-color: #FFFFFF;
+    `;
+  }
+
+  // 🔹 Discapacidad Visual → fondo crema, texto negro, interlineado alto, subrayado
+  else if (necesidad === "Discapacidad Visual") {
+    estilos = `
+      font-family: Arial;
+      font-size: 22px;
+      line-height: 2.2;
+      color: #000000;
     `;
 
-    const blob = htmlDocx.asBlob(html);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = material.titulo + "-adaptado.docx";
-    a.click();
-  };
+    contenidoFinal = contenidoAdaptado
+      .replace(/\n/g, "<p>")
+      .replace(
+        /(.+?)(<\/p>|$)/g,
+        `<p style="background-color:#FFF9C4; text-decoration: underline; text-decoration-color:#FFF9C4; padding:6px 10px;">$1</p>`
+      );
+  }
+
+  // 🔹 Dislexia → letra mayor y más espaciamiento
+  else if (necesidad === "Dislexia") {
+    estilos = `
+      font-family: 'Arial', sans-serif;
+      font-size: 18px;
+      line-height: 1.9;
+      color: #000000;
+      background-color: #FAFAFA;
+    `;
+  }
+
+  // 🔹 HTML final
+  const html = `
+    <html>
+      <head><meta charset="UTF-8"></head>
+      <body style="${estilos}">
+        <div style="background-color:${
+          necesidad === "Discapacidad Visual" ? "#FFF9C4" : "#FFFFFF"
+        }; padding: 20px; border-radius: 8px;">
+          ${contenidoFinal}
+        </div>
+      </body>
+    </html>
+  `;
+
+  // 🔹 Convertimos a DOCX y descargamos
+  const blob = htmlDocx.asBlob(html);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const nombreSeguro = (currentUser?.nombre || "alumno").replace(/\s+/g, "_");
+  a.download = `${material.titulo}_${nombreSeguro}_adaptado.docx`;
+  a.click();
+};
+
 
   /* ---------------------------- ESTILOS ---------------------------- */
   const styleTexto = {
