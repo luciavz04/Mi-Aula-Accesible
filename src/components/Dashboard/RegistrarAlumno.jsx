@@ -43,7 +43,7 @@ function RegistrarAlumno({ setCurrentPage }) {
         usuario,
         dni,
         password,
-        necesidades: necesidad, // 🔹 Guarda un único valor
+        necesidades: [necesidad], // 🔹 Guarda un único valor
         fecha_registro: new Date().toISOString(),
       });
 

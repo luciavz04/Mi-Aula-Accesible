@@ -9,7 +9,6 @@ import {
   Download,
   Highlighter,
   BookOpen,
-  Eye,
   Megaphone,
   ChevronUp,
   ChevronDown,
@@ -20,7 +19,6 @@ function MaterialCard({ material, currentUser, userType }) {
   const [fontSize, setFontSize] = useState(16);
   const [contenidoAdaptado, setContenidoAdaptado] = useState("");
   const [mostrarVersionCompleta, setMostrarVersionCompleta] = useState(false);
-  const [modoOpenDyslexic, setModoOpenDyslexic] = useState(false);
   const [lecturaEnfocada, setLecturaEnfocada] = useState(false);
   const [contenidoVisible, setContenidoVisible] = useState(true);
 
@@ -35,14 +33,8 @@ function MaterialCard({ material, currentUser, userType }) {
   const adaptarContenido = useCallback(() => {
     const necesidades = currentUser?.necesidades || [];
 
-    if (esAnuncio) {
-      setContenidoAdaptado(material.contenido || "Sin contenido");
-      return;
-    }
-
     const base = material.auto_adaptaciones?.textoBase || material.contenido || "";
     const simplificada = material.auto_adaptaciones?.versionSimplificada;
-    const lecturaFacil = material.auto_adaptaciones?.lecturaFacil;
 
     let texto = base;
 
@@ -50,8 +42,6 @@ function MaterialCard({ material, currentUser, userType }) {
       setContenidoAdaptado(base);
       return;
     }
-
-    if (necesidades.includes("Dislexia") && lecturaFacil) texto = lecturaFacil;
 
     if (
       necesidades.includes("Dificultad de Comprensión") &&
@@ -61,9 +51,7 @@ function MaterialCard({ material, currentUser, userType }) {
       texto = simplificada;
 
     setContenidoAdaptado(texto);
-
-    if (necesidades.includes("Dislexia")) setModoOpenDyslexic(true);
-  }, [material, currentUser, mostrarVersionCompleta, esAnuncio, userType]);
+  }, [material, currentUser, mostrarVersionCompleta, userType]);
 
   useEffect(() => {
     adaptarContenido();
@@ -113,9 +101,7 @@ function MaterialCard({ material, currentUser, userType }) {
     if (esAnuncio) return;
 
     const html = `
-      <html><body style="font-family:${
-        modoOpenDyslexic ? "OpenDyslexic" : "Arial"
-      }; font-size:18px;">
+      <html><body style="font-family: Arial; font-size:18px;">
       ${contenidoAdaptado.replace(/\n/g, "<p>")}
       </body></html>
     `;
@@ -129,7 +115,7 @@ function MaterialCard({ material, currentUser, userType }) {
 
   /* ---------------------------- ESTILOS ---------------------------- */
   const styleTexto = {
-    fontFamily: modoOpenDyslexic ? "OpenDyslexic, Arial" : "Arial",
+    fontFamily: "Arial",
     fontSize: fontSize,
     backgroundColor: lecturaEnfocada ? "#000" : "#F3F4F6",
     color: lecturaEnfocada ? "#fff" : "#1F2937",
@@ -142,7 +128,6 @@ function MaterialCard({ material, currentUser, userType }) {
   /* ---------------------------- UI ---------------------------- */
   return (
     <div className="shadow-xl rounded-2xl bg-white overflow-hidden mb-8">
-
       {/* CABECERA */}
       <div className={`${esAnuncio ? "bg-yellow-600" : "bg-indigo-600"} p-6`}>
         <h3 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -157,7 +142,7 @@ function MaterialCard({ material, currentUser, userType }) {
           )}
         </h3>
 
-        {/* FECHA SIEMPRE VISIBLE */}
+        {/* FECHA */}
         <p className="text-gray-200 text-sm mt-1 font-medium">
           {material.fecha_subida
             ? new Date(material.fecha_subida).toLocaleDateString("es-ES", {
@@ -171,11 +156,9 @@ function MaterialCard({ material, currentUser, userType }) {
 
       {/* CUERPO */}
       <div className="p-6 space-y-6">
-
-        {/* --- LECTURA EN VOZ ALTA (ARRIBA) --- */}
+        {/* LECTURA EN VOZ ALTA */}
         {userType === "alumno" && (
           <div className="flex flex-wrap gap-3 border-b pb-4">
-
             {estadoLectura === "stop" && (
               <button
                 onClick={iniciarLectura}
@@ -212,14 +195,12 @@ function MaterialCard({ material, currentUser, userType }) {
                 <Square className="w-4" /> Detener
               </button>
             )}
-
           </div>
         )}
 
-        {/* --- BOTONES ACCESIBLES --- */}
-        {!esAnuncio && userType === "alumno" && (
+        {/* BOTONES ACCESIBLES (ahora también en anuncios) */}
+        {userType === "alumno" && (
           <div className="flex flex-wrap gap-3 pt-2 border-b pb-4">
-
             <button
               onClick={() => setFontSize((p) => Math.max(12, p - 2))}
               className="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
@@ -235,15 +216,6 @@ function MaterialCard({ material, currentUser, userType }) {
             </button>
 
             <button
-              onClick={() => setModoOpenDyslexic((v) => !v)}
-              className={`px-3 py-2 rounded-lg flex items-center gap-2 ${
-                modoOpenDyslexic ? "bg-indigo-200" : "bg-gray-100 hover:bg-gray-200"
-              }`}
-            >
-              <Eye className="w-4 h-4" /> Dyslexic
-            </button>
-
-            <button
               onClick={() => setLecturaEnfocada((v) => !v)}
               className={`px-3 py-2 rounded-lg flex items-center gap-2 ${
                 lecturaEnfocada ? "bg-indigo-200" : "bg-gray-100 hover:bg-gray-200"
@@ -254,7 +226,7 @@ function MaterialCard({ material, currentUser, userType }) {
           </div>
         )}
 
-        {/* --- BOTÓN OCULTAR/MOSTRAR CONTENIDO --- */}
+        {/* MOSTRAR / OCULTAR */}
         <button
           onClick={() => setContenidoVisible(!contenidoVisible)}
           className="flex items-center gap-2 text-indigo-600 font-semibold"
@@ -270,16 +242,14 @@ function MaterialCard({ material, currentUser, userType }) {
           )}
         </button>
 
-        {/* --- CONTENIDO --- */}
-        {contenidoVisible && (
-          <div style={styleTexto}>{contenidoAdaptado}</div>
-        )}
+        {/* CONTENIDO */}
+        {contenidoVisible && <div style={styleTexto}>{contenidoAdaptado}</div>}
 
-        {/* --- DESCARGA DOCX --- */}
+        {/* DESCARGA */}
         {!esAnuncio && userType === "alumno" && (
           <button
             onClick={descargarAdaptado}
-            className="btn-primary w-full flex items-center justify-center gap-2 mt-6"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 mt-6 transition"
           >
             <Download className="w-5 h-5" />
             Descargar documento adaptado

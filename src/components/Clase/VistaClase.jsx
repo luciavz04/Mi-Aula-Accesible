@@ -7,7 +7,6 @@ import MaterialesList from "./MaterialesList";
 function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
   const [materiales, setMateriales] = useState([]);
   const [anuncios, setAnuncios] = useState([]);
-
   const [archivoAdjunto, setArchivoAdjunto] = useState(null);
   const [nuevoAnuncio, setNuevoAnuncio] = useState("");
   const [subiendo, setSubiendo] = useState(false);
@@ -166,10 +165,11 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
   return (
     <div className="min-h-screen p-6 bg-gray-100">
       <div className="max-w-6xl mx-auto space-y-6">
-
         {/* Volver */}
         <button
-          onClick={() => setCurrentPage(esAlumno ? "alumno-dashboard" : "profesor-dashboard")}
+          onClick={() =>
+            setCurrentPage(esAlumno ? "alumno-dashboard" : "profesor-dashboard")
+          }
           className="inline-flex items-center text-indigo-600 font-semibold hover:text-indigo-800"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
@@ -179,7 +179,9 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
         {/* Header */}
         <section className="rounded-3xl p-8 bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl">
           <h1 className="text-3xl font-bold">{clase.nombre}</h1>
-          <p className="opacity-80 mt-2">Profesor/a: {clase.profesor_nombre}</p>
+          <p className="opacity-80 mt-2">
+            Profesor/a: {clase.profesor_nombre}
+          </p>
         </section>
 
         {/* Errores */}
@@ -213,12 +215,16 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
               />
             </label>
 
-            {archivoAdjunto && <p className="text-sm text-gray-600">📄 {archivoAdjunto.nombre}</p>}
+            {archivoAdjunto && (
+              <p className="text-sm text-gray-600">
+                📄 {archivoAdjunto.nombre}
+              </p>
+            )}
 
             <button
               onClick={subirMaterial}
               disabled={subiendo || !archivoAdjunto}
-              className="btn-primary w-full disabled:opacity-50"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-3 rounded-xl font-semibold disabled:opacity-50 transition"
             >
               {subiendo ? "Subiendo..." : "Subir material"}
             </button>
@@ -244,7 +250,7 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
             <button
               onClick={publicarAnuncio}
               disabled={!nuevoAnuncio.trim()}
-              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition"
             >
               <Send className="w-4 h-4" />
               Publicar anuncio
@@ -260,7 +266,9 @@ function VistaClase({ clase, currentUser, userType, setCurrentPage }) {
           </h2>
 
           {listaCompleta.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No hay materiales ni anuncios todavía.</p>
+            <p className="text-center text-gray-500 py-8">
+              No hay materiales ni anuncios todavía.
+            </p>
           ) : (
             <MaterialesList
               materiales={listaCompleta}
