@@ -165,16 +165,18 @@ function MaterialCard({ material, currentUser, userType }) {
   };
 
   /* ---------------------------- ESTILOS ---------------------------- */
-  const styleTexto = {
+    const styleTexto = {
     fontFamily: "Arial",
     fontSize: fontSize,
-    backgroundColor: lecturaEnfocada ? "#000" : "#F3F4F6",
-    color: "#000000",
+    backgroundColor: lecturaEnfocada ? "#000000" : "#F3F4F6",
+    color: lecturaEnfocada ? "#FFFFFF" : "#1F2937", // 🔹 Letras claras en modo enfoque
     lineHeight: "1.7",
     padding: "16px",
     borderRadius: "12px",
     whiteSpace: "pre-wrap",
+    transition: "all 0.3s ease",
   };
+
 
   /* ---------------------------- UI ---------------------------- */
   return (
