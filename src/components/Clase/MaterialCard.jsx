@@ -135,7 +135,7 @@ function MaterialCard({ material, currentUser, userType }) {
         );
     } else if (necesidad === "Dislexia") {
       estilos = `
-        font-family: OpenDyslexic;
+        font-family: OpenDyslexicAlta;
         font-size: 18px;
         line-height: 1.9;
         color: #000000;
